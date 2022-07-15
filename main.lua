@@ -25,6 +25,7 @@ function love.keypressed(key, scancode, isrepeat)
   --https://www.youtube.com/watch?v=79DijItQXMM
   if key == "escape" then
     love.event.quit()
+    print("...")
   end
 end
 
