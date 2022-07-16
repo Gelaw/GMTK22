@@ -2,7 +2,7 @@ map =nil-- stores tiledata
 mapWidth, mapHeight = nil-- width and height in tiles
 
 mapI, mapJ =nil-- view i,j. can be a fractional value like 3.25.
-
+mapX, mapY = nil--position of the map display on the screen
 tilesDisplayWidth, tilesDisplayHeight =nil-- number of tiles to show
 zoomX, zoomY =nil
 
@@ -12,23 +12,13 @@ local tileQuads = {} -- parts of the tileset used for different tiles
 local tilesetSprite
 
 function setupMap()
-  mapWidth = 30
-  mapHeight = 30
+  mapWidth = 15
+  mapHeight = 15
   map = {}
   for x=1,mapWidth do
     map[x] = {}
     for y=1,mapHeight do
-      if y == math.floor(.5 * mapHeight) then
-        map[x][y] = 0
-      elseif y > math.floor(.5 * mapHeight) then
-        map[x][y] = 1
-      else
-        if x == math.floor(.5*mapWidth) then
-          map[x][y] = math.random(2, 3)
-        else
-          map[x][y] = 2
-        end
-      end
+      map[x][y] = math.random(0, 2)
     end
   end
 end
@@ -36,25 +26,32 @@ end
 function setupMapView()
   mapI = 1
   mapJ = 1
-  zoomX = 2
-  zoomY = 1.41
+  zoomX = 2*2
+  zoomY = 1.41*2
   tileSize = 16
 
   tilesDisplayWidth = width/(tileSize * zoomX) + 1
   tilesDisplayHeight = height/(tileSize * zoomY) + 1
+
+  mapX, mapY = .5*(width - mapWidth*tileSize*zoomX), .3*(height - mapHeight*tileSize*zoomY)
   addDrawFunction(function ()
-    love.graphics.origin()
-    love.graphics.setColor(1, 1, 1)
-    local dx, dy = math.floor(-zoomX*(mapI%1)*tileSize), math.floor(-zoomY*(mapJ%1)*tileSize)
-    love.graphics.draw(tilesetBatch, dx, dy, 0, zoomX, zoomY)
-    -- love.graphics.print("FPS: "..love.timer.getFPS().."\tx:"..math.floor(mapI).."\ty:"..math.floor(mapJ), 10, 20)
-    love.graphics.setColor(.3, .3, .3)
-    for i=0, tilesDisplayWidth-1 do
-      for j=0, tilesDisplayHeight-1 do
-        love.graphics.rectangle("line", i*zoomX*tileSize, j*zoomY*tileSize, zoomX*tileSize, zoomY*tileSize)
-      end
-    end
+    drawMap()
   end, 4)
+end
+
+function drawMap()
+  love.graphics.origin()
+  love.graphics.setColor(1, 1, 1)
+  love.graphics.translate(mapX, mapY)
+  local dx, dy = math.floor(-zoomX*(mapI%1)*tileSize), math.floor(-zoomY*(mapJ%1)*tileSize)
+  love.graphics.draw(tilesetBatch, dx, dy, 0, zoomX, zoomY)
+  -- love.graphics.print("FPS: "..love.timer.getFPS().."\tx:"..math.floor(mapI).."\ty:"..math.floor(mapJ), 10, 20)
+  love.graphics.setColor(.3, .3, .3, .1)
+  for i=0, tilesDisplayWidth-1 do
+    for j=0, tilesDisplayHeight-1 do
+      love.graphics.rectangle("line", i*zoomX*tileSize, j*zoomY*tileSize, zoomX*tileSize, zoomY*tileSize)
+    end
+  end
 end
 
 function setupTileset()
@@ -62,13 +59,13 @@ function setupTileset()
   tilesetImage:setFilter("nearest", "linear") -- this "linear filter" removes some artifacts if we were to scale the tiles
 
   -- ground
-  tileQuads[0] = love.graphics.newQuad(11 * tileSize, 6 * tileSize, tileSize, tileSize,
+  tileQuads[0] = love.graphics.newQuad(4 * tileSize, 6 * tileSize+10, tileSize, tileSize,
   tilesetImage:getWidth(), tilesetImage:getHeight())
   -- deep ground
-  tileQuads[1] = love.graphics.newQuad(11 * tileSize, 7 * tileSize, tileSize, tileSize,
+  tileQuads[1] = love.graphics.newQuad(32, 107, tileSize, tileSize,
   tilesetImage:getWidth(), tilesetImage:getHeight())
   -- sky
-  tileQuads[2] = love.graphics.newQuad(0 * tileSize, 2 * tileSize, tileSize, tileSize,
+  tileQuads[2] = love.graphics.newQuad(73, 106, tileSize, tileSize,
   tilesetImage:getWidth(), tilesetImage:getHeight())
   -- cloud
   tileQuads[3] = love.graphics.newQuad(12 * tileSize, 3 * tileSize, tileSize, tileSize,
@@ -105,9 +102,9 @@ end
 
 -- conversion between gridspace and screenspace
 function screenToGrid(x, y)
-  return math.floor((x)/(tileSize*zoomX)-mapI +2), math.floor((y)/(tileSize*zoomY) -mapJ +2)
+  return math.floor((x-mapX)/(tileSize*zoomX)-mapI +2), math.floor((y-mapY)/(tileSize*zoomY) -mapJ +2)
 end
 
 function gridToScreen(i, j)
-  return (mapI + i-2)*tileSize*zoomX-.5*width, (mapJ + j-2)*tileSize*zoomY-.5*height
+  return (mapI + i-2)*tileSize*zoomX-.5*width+mapX, (mapJ + j-2)*tileSize*zoomY-.5*height+mapY
 end
