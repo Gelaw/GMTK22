@@ -55,7 +55,7 @@ function drawMap()
 end
 
 function setupTileset()
-  tilesetImage = love.graphics.newImage( "sprite/Tiles.png" )
+  tilesetImage = love.graphics.newImage( "src/img/sprites/Tiles.png" )
   tilesetImage:setFilter("nearest", "linear") -- this "linear filter" removes some artifacts if we were to scale the tiles
 
   -- ground

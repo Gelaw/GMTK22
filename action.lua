@@ -96,11 +96,11 @@ end
 
 
 function testActions()
-    local target = applyParams(newLivingEntity(), {i=2, j=1, color = {1, 0, 0}, spriteSet = {path = "sprite/oldHero.png", width = 16, height = 16}})
+    local target = applyParams(newLivingEntity(), {i=2, j=1, color = {1, 0, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
     target:initEntity()
     target.ressources.life = newRessource("life", 10, 10)
 
-    local caster = applyParams(newLivingEntity(), {i=1, j=2, color = {0, 0, 1}, spriteSet = {path = "sprite/oldHero.png", width = 16, height = 16}})
+    local caster = applyParams(newLivingEntity(), {i=1, j=2, color = {0, 0, 1}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
     caster:initEntity()
     caster.ressources.life = newRessource("life", 10, 10)
     local walkAction = actions.Walk()

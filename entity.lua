@@ -151,7 +151,7 @@ end
 ressourceTypes = {life = {name = "life"}}
 
 function testLivingEntityRessource()
-    local livingEntity = applyParams(newLivingEntity(), {i = 5, j=5, color={0, 1, 0}, spriteSet = {path = "sprite/oldHero.png", width = 16, height = 16}})
+    local livingEntity = applyParams(newLivingEntity(), {i = 5, j=5, color={0, 1, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
     livingEntity:initEntity()
 
     livingEntity.ressources.life = newRessource("life", 10, 10)

@@ -11,14 +11,14 @@ function projectSetup()
   setupMapView()
   setupTileset()
   
-  player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "sprite/oldHero.png", width = 16, height = 16}})
+  player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
   player.ressources.life = newRessource("life", 10, 10)
   player:addAction(actions.Walk({range=2}))
   player:addAction(actions.MeleeAttack())
   player:addAction(actions.Heal())
   player:initEntity()
   
-  animation = newAnimation(love.graphics.newImage("sprite/VolcanoTile.png"), 258, 258, 2.3, 258, 258)
+  animation = newAnimation(love.graphics.newImage("src/img/sprites/VolcanoTile.png"), 258, 258, 2.3, 258, 258)
   addDrawFunction(function ()
     love.graphics.setColor(1, 1, 1)
     love.graphics.translate(.5*(-width+258), .5*(-height+258))
@@ -125,7 +125,7 @@ function projectSetup()
     end
   }
   
-  ennemy = applyParams(newLivingEntity(), {i = 10, j=10, w=32, h=32, color = {1, 0, 0}, spriteSet = {path = "sprite/oldHero.png", width = 16, height = 16}})
+  ennemy = applyParams(newLivingEntity(), {i = 10, j=10, w=32, h=32, color = {1, 0, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
   ennemy.ressources.life = newRessource("life", 10, 10)
   ennemy:addAction(actions.Walk({range=2}))
   ennemy:addAction(actions.MeleeAttack())
