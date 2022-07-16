@@ -4,6 +4,20 @@ require "map"
 require "entity"
 require "action"
 
+function launch()
+  --Faire ecran demarrage
+  currScreen = "home"
+  addDrawFunction(function ()
+    love.graphics.setBackgroundColor(122/255, 41/255,24/255)
+    local btnExit = love.graphics.newImage("src/img/Options/EXIT.png")
+    local btnOptions = love.graphics.newImage("src/img/Options/op.png")
+    local btnStart = love.graphics.newImage("src/img/Options/start.png")
+    love.graphics.draw(btnExit,0 ,0)
+    love.graphics.draw(btnOptions,0,50)
+    love.graphics.draw(btnStart,0 ,100)
+  end)  
+end
+
 function projectSetup()
   love.graphics.setBackgroundColor(.3, .3, .3)
   
@@ -24,7 +38,7 @@ function projectSetup()
     love.graphics.translate(.5*(-width+258), .5*(-height+258))
     animation:draw()
   end)
-  addUpdateFunction(function (dt) animation:update(dt) end)
+  addUpdateFunction(function (dt) animation:upOdate(dt) end)
 
   game = {
     nTurn = 1,
@@ -255,22 +269,33 @@ table.insert(uis, nextTurnUI)
 end
 
 function love.mousepressed(x, y, button, isTouch)
-  local press = UIMousePress(x, y , button)
-  if not press then
-    local i, j = screenToGrid(x, y)
-    if map[i] and map[i][j] and map[i][j] > 0 then
-      if selectedAction then
-        if selectedAction:try({i=i, j=j}) then
-          game:endTurn()
+
+  if currScreen == "acceuil" then
+    --  
+  elseif currScreen == "game" then
+    local press = UIMousePress(x, y , button)
+    if not press then
+      local i, j = screenToGrid(x, y)
+      if map[i] and map[i][j] and map[i][j] > 0 then
+        if selectedAction then
+          if selectedAction:try({i=i, j=j}) then
+            game:endTurn()
+          end
         end
+        selectedAction = nil
       end
-      selectedAction = nil
     end
   end
 end
 
 function love.mousereleased(x, y, button, isTouch)
-  UIMouseRelease(x, y, button)
+  if currScreen == "acceuil" then
+    --
+  elseif currScreen == "game" then
+    UIMouseRelease(x, y, button)
+  
+  end
+
 end
 
 function love.keypressed(key, scancode, isrepeat)
