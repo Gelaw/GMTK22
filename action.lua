@@ -53,6 +53,7 @@ actions = {
         end
         heal.activate = function (self)
             self.caster:credit(newRessource("life", self.healAmout))
+            return true
         end
         return applyParams(heal, params)
     end,
@@ -65,7 +66,9 @@ actions = {
             local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
             if entityTargeted and entityTargeted.hit then
                 entityTargeted:hit(self.damage)
+                return true
             end
+            return false
         end
         return applyParams(meleeAttack, params)
     end,
@@ -93,28 +96,28 @@ end
 
 
 function testActions()
-    local target = applyParams(newLivingEntity(), {i=2, j=1, color = {1, 0, 0}, spriteSet = {path = "sprite/oldHero.png", width = 16, height = 16}})
+    local target = applyParams(newLivingEntity(), {i=2, j=1, color = {1, 0, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
     target:initEntity()
     target.ressources.life = newRessource("life", 10, 10)
 
-    local caster = applyParams(newLivingEntity(), {i=1, j=2, color = {0, 0, 1}, spriteSet = {path = "sprite/oldHero.png", width = 16, height = 16}})
+    local caster = applyParams(newLivingEntity(), {i=1, j=2, color = {0, 0, 1}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
     caster:initEntity()
     caster.ressources.life = newRessource("life", 10, 10)
     local walkAction = actions.Walk()
     caster:addAction(walkAction)
-    walkAction:try({i=1, j=1})
+    print("walkAction try ", walkAction:try({i=1, j=1}))
     assert(caster.i==1, caster.j==1, "walk action failed!")
     print("walk action OK")
 
     local meleeAttackAction = actions.MeleeAttack()
     caster:addAction(meleeAttackAction)
-    meleeAttackAction:try({i=2, j=1})
+    print("meleeAttackAction try ", meleeAttackAction:try({i=2, j=1}))
     assert(target.ressources.life.quantity==8, "meleeAttack action failed! expected target life 8, found "..target.ressources.life.quantity)
     print("meleeAttack action Ok")
 
     local healAction = actions.Heal()
     target:addAction(healAction)
-    healAction:try({i=2, j=1})
+    print("healAction try ", healAction:try({i=2, j=1}))
     assert(target.ressources.life.quantity==9, "heal action failed! expected target life 9, found "..target.ressources.life.quantity)
     print("heal action Ok")
 end
