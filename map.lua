@@ -1,59 +1,66 @@
-local map -- stores tiledata
-local mapWidth, mapHeight -- width and height in tiles
+map =nil-- stores tiledata
+mapWidth, mapHeight = nil-- width and height in tiles
 
-local mapX, mapY -- view x,y in tiles. can be a fractional value like 3.25.
+mapI, mapJ =nil-- view i,j. can be a fractional value like 3.25.
 
-local tilesDisplayWidth, tilesDisplayHeight -- number of tiles to show
-local zoomX, zoomY
+tilesDisplayWidth, tilesDisplayHeight =nil-- number of tiles to show
+zoomX, zoomY =nil
 
 local tilesetImage
-local tileSize -- size of tiles in pixels
+tileSize =16 -- size of tiles in pixels in the tileSet
 local tileQuads = {} -- parts of the tileset used for different tiles
 local tilesetSprite
 
 function setupMap()
-  mapWidth = 100
-  mapHeight = 100
+  mapWidth = 30
+  mapHeight = 30
   map = {}
   for x=1,mapWidth do
     map[x] = {}
     for y=1,mapHeight do
-      if y == math.floor(.7 * mapHeight) then
+      if y == math.floor(.5 * mapHeight) then
         map[x][y] = 0
-      elseif y > math.floor(.7 * mapHeight) then
+      elseif y > math.floor(.5 * mapHeight) then
         map[x][y] = 1
       else
-        map[x][y] = math.random(2, 3)
+        if x == math.floor(.5*mapWidth) then
+          map[x][y] = math.random(2, 3)
+        else
+          map[x][y] = 2
+        end
       end
     end
   end
-  addUpdateFunction(function (dt)
-    moveMap(camera.x, camera.y)
-  end)
 end
 
 function setupMapView()
-  mapX = 1
-  mapY = 1
-  tilesDisplayWidth = width/32 + 1
-  tilesDisplayHeight = height/32 + 1
-  
+  mapI = 1
+  mapJ = 1
   zoomX = 2
-  zoomY = 2
+  zoomY = 1.41
+  tileSize = 16
+
+  tilesDisplayWidth = width/(tileSize * zoomX) + 1
+  tilesDisplayHeight = height/(tileSize * zoomY) + 1
   addDrawFunction(function ()
     love.graphics.origin()
     love.graphics.setColor(1, 1, 1)
-    local dx, dy = math.floor(-zoomX*(mapX%1)*tileSize), math.floor(-zoomY*(mapY%1)*tileSize)
+    local dx, dy = math.floor(-zoomX*(mapI%1)*tileSize), math.floor(-zoomY*(mapJ%1)*tileSize)
     love.graphics.draw(tilesetBatch, dx, dy, 0, zoomX, zoomY)
-    love.graphics.print("FPS: "..love.timer.getFPS().."\tx:"..math.floor(mapX).."\ty:"..math.floor(mapY), 10, 20)
+    -- love.graphics.print("FPS: "..love.timer.getFPS().."\tx:"..math.floor(mapI).."\ty:"..math.floor(mapJ), 10, 20)
+    love.graphics.setColor(.3, .3, .3)
+    for i=0, tilesDisplayWidth-1 do
+      for j=0, tilesDisplayHeight-1 do
+        love.graphics.rectangle("line", i*zoomX*tileSize, j*zoomY*tileSize, zoomX*tileSize, zoomY*tileSize)
+      end
+    end
   end, 4)
 end
 
 function setupTileset()
   tilesetImage = love.graphics.newImage( "sprite/Tiles.png" )
   tilesetImage:setFilter("nearest", "linear") -- this "linear filter" removes some artifacts if we were to scale the tiles
-  tileSize = 16
-  
+
   -- ground
   tileQuads[0] = love.graphics.newQuad(11 * tileSize, 6 * tileSize, tileSize, tileSize,
   tilesetImage:getWidth(), tilesetImage:getHeight())
@@ -74,10 +81,10 @@ end
 
 function updateTilesetBatch()
   tilesetBatch:clear()
-  for x=0, tilesDisplayWidth-1 do
-    for y=0, tilesDisplayHeight-1 do
-      if map[x+math.floor(mapX)] and map[x+math.floor(mapX)][y+math.floor(mapY)] then
-        tilesetBatch:add(tileQuads[map[x+math.floor(mapX)][y+math.floor(mapY)]], x*tileSize, y*tileSize)
+  for i=0, tilesDisplayWidth-1 do
+    for j=0, tilesDisplayHeight-1 do
+      if map[i+math.floor(mapI)] and map[i+math.floor(mapI)][j+math.floor(mapJ)] then
+        tilesetBatch:add(tileQuads[map[i+math.floor(mapI)][j+math.floor(mapJ)]], i*tileSize, j*tileSize)
       end
     end
   end
@@ -86,12 +93,21 @@ end
 
 -- central function for moving the map
 function moveMap(newX, newY)
-  oldMapX = mapX
-  oldMapY = mapY
-  mapX = newX/32
-  mapY = newY/32
+  oldMapI = mapI
+  oldMapJ = mapJ
+  mapI = newX/(tileSize*zoomX)
+  mapJ = newY/(tileSize*zoomY)
   -- only update if we actually moved
-  if math.floor(mapX) ~= math.floor(oldMapX) or math.floor(mapY) ~= math.floor(oldMapY) then
+  if math.floor(mapI) ~= math.floor(oldMapI) or math.floor(mapJ) ~= math.floor(oldMapJ) then
     updateTilesetBatch()
   end
+end
+
+-- conversion between gridspace and screenspace
+function screenToGrid(x, y)
+  return math.floor((x)/(tileSize*zoomX)-mapI +2), math.floor((y)/(tileSize*zoomY) -mapJ +2)
+end
+
+function gridToScreen(i, j)
+  return (mapI + i-2)*tileSize*zoomX-.5*width, (mapJ + j-2)*tileSize*zoomY-.5*height
 end
