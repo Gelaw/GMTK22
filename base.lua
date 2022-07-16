@@ -271,8 +271,10 @@ end
 
 
 function applyParams(table, parameters)
-  for p, parameter in pairs(parameters) do
-    table[p] = parameter
+  if parameters then
+    for p, parameter in pairs(parameters) do
+      table[p] = parameter
+    end
   end
   return table
 end
