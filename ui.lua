@@ -1,5 +1,4 @@
 uis = {}
-
 function drawUIs()
   love.graphics.origin()
   for u, ui in pairs(uis) do
@@ -12,7 +11,9 @@ addDrawFunction(drawUIs, 9)
 function drawElementAndChildren(ui)
   if not ui.hidden and ui.draw then
     love.graphics.push()
-    love.graphics.translate(ui.x, ui.y)
+    if ui.x and ui.y then
+      love.graphics.translate(ui.x, ui.y)
+    end
     ui:draw()
     if ui.children then
       for c, child in pairs(ui.children) do
@@ -24,7 +25,7 @@ function drawElementAndChildren(ui)
 end
 
 function getElementOn(x, y)
-  local element
+  local element   
   for u, ui in pairs(uis) do
     element =  getElementOrChildOn(ui, x, y)
     if element then return element end

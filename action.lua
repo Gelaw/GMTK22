@@ -1,3 +1,4 @@
+actionTypesKeys = {"attack", "move", "support"}
 actionTypes = {
     attack = {name = "attack"},
     move = {name = "move"},
@@ -42,7 +43,8 @@ end
 actions = {
     Heal = function (params)
         local heal = newAction()
-        heal.actionType = actionTypes.support
+        heal.actionType = "support"
+        heal.name = "HEAL"
         heal.usableOnSelf = true
         heal.range = 0
         heal.healAmout = 1
@@ -56,8 +58,8 @@ actions = {
     end,
     MeleeAttack = function(params)
         local meleeAttack = newAction()
-
-        meleeAttack.actionType = actionTypes.attack
+        meleeAttack.name = "MELEE ATTACK"
+        meleeAttack.actionType = "attack"
         meleeAttack.damage = 2
         meleeAttack.activate = function (self, targetCell)
             local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
@@ -65,13 +67,12 @@ actions = {
                 entityTargeted:hit(self.damage)
             end
         end
-
         return applyParams(meleeAttack, params)
     end,
     Walk = function(params)
         local walk = newAction()
-
-        walk.actionType = actionTypes.move
+        walk.name = "WALK"
+        walk.actionType = "move"
         walk.isTargetValid = function (self, targetCell)
             local d = manhattanDistance(self.caster, targetCell)
             if d > 0 and d <= self.range then

@@ -6,7 +6,7 @@ function newEntity()
     entity.snappingSpeed = 30 * tileSize
     entity.w, entity.h = tileSize, tileSize
     entity.blockPath = true         --does entity prevent from walking on his cell
-
+    
     entity.updates = {
         function (self, dt)
             local x, y = gridToScreen(self.i, self.j)
@@ -28,8 +28,8 @@ function newEntity()
     end
     
     entity.move = function(self, newI, newJ)
-        local  entityOnNewPos = getEntityOn(newI, newJ)
-        if not entityOnNewPos or entityOnNewPos.blockPath then
+        local entityOnNewPos = getEntityOn(newI, newJ)
+        if not entityOnNewPos or not entityOnNewPos.blockPath then
             self.i, self.j = newI, newJ
             return true
         end

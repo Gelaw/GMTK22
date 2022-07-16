@@ -33,7 +33,7 @@ function setupMapView()
   tilesDisplayWidth = width/(tileSize * zoomX) + 1
   tilesDisplayHeight = height/(tileSize * zoomY) + 1
 
-  mapX, mapY = .5*(width - mapWidth*tileSize*zoomX), .5*(height - mapHeight*tileSize*zoomY)
+  mapX, mapY = .5*(width - mapWidth*tileSize*zoomX), .3*(height - mapHeight*tileSize*zoomY)
   addDrawFunction(function ()
     drawMap()
   end, 4)
