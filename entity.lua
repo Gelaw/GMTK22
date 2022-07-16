@@ -6,7 +6,7 @@ function newEntity()
     entity.snappingSpeed = 30 * tileSize
     entity.w, entity.h = tileSize, tileSize
     entity.blockPath = true         --does entity prevent from walking on his cell
-    
+
     entity.updates = {
         function (self, dt)
             local x, y = gridToScreen(self.i, self.j)
@@ -28,6 +28,7 @@ function newEntity()
     end
     
     entity.move = function(self, newI, newJ)
+        if not map[newI] or not map[newI][newJ] or map[newI][newJ]  < 1 then return false end
         local entityOnNewPos = getEntityOn(newI, newJ)
         if not entityOnNewPos or not entityOnNewPos.blockPath then
             self.i, self.j = newI, newJ
@@ -57,6 +58,9 @@ function newEntity()
             self.draw = function (self)
                 love.graphics.setColor(self.color or {1, 1, 1})
                 love.graphics.translate(self.x+.5*zoomX*tileSize, self.y+.5*zoomY*tileSize-.5*self.h)
+                if self:isDead() then
+                    love.graphics.rotate(math.rad(-90))
+                end
                 self.animation:draw()
             end
             table.insert(self.updates,

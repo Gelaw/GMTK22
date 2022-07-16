@@ -53,6 +53,7 @@ actions = {
         end
         heal.activate = function (self)
             self.caster:credit(newRessource("life", self.healAmout))
+            return true
         end
         return applyParams(heal, params)
     end,
@@ -65,7 +66,9 @@ actions = {
             local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
             if entityTargeted and entityTargeted.hit then
                 entityTargeted:hit(self.damage)
+                return true
             end
+            return false
         end
         return applyParams(meleeAttack, params)
     end,
@@ -102,19 +105,19 @@ function testActions()
     caster.ressources.life = newRessource("life", 10, 10)
     local walkAction = actions.Walk()
     caster:addAction(walkAction)
-    walkAction:try({i=1, j=1})
+    print("walkAction try ", walkAction:try({i=1, j=1}))
     assert(caster.i==1, caster.j==1, "walk action failed!")
     print("walk action OK")
 
     local meleeAttackAction = actions.MeleeAttack()
     caster:addAction(meleeAttackAction)
-    meleeAttackAction:try({i=2, j=1})
+    print("meleeAttackAction try ", meleeAttackAction:try({i=2, j=1}))
     assert(target.ressources.life.quantity==8, "meleeAttack action failed! expected target life 8, found "..target.ressources.life.quantity)
     print("meleeAttack action Ok")
 
     local healAction = actions.Heal()
     target:addAction(healAction)
-    healAction:try({i=2, j=1})
+    print("healAction try ", healAction:try({i=2, j=1}))
     assert(target.ressources.life.quantity==9, "heal action failed! expected target life 9, found "..target.ressources.life.quantity)
     print("heal action Ok")
 end

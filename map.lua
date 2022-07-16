@@ -18,7 +18,7 @@ function setupMap()
   for x=1,mapWidth do
     map[x] = {}
     for y=1,mapHeight do
-      map[x][y] = math.random(0, 2)
+      map[x][y] = math.random(0, 3)
     end
   end
 end
@@ -59,7 +59,7 @@ function setupTileset()
   tilesetImage:setFilter("nearest", "linear") -- this "linear filter" removes some artifacts if we were to scale the tiles
 
   -- ground
-  tileQuads[0] = love.graphics.newQuad(4 * tileSize, 6 * tileSize+10, tileSize, tileSize,
+  tileQuads[3] = love.graphics.newQuad(4 * tileSize, 6 * tileSize+10, tileSize, tileSize,
   tilesetImage:getWidth(), tilesetImage:getHeight())
   -- deep ground
   tileQuads[1] = love.graphics.newQuad(32, 107, tileSize, tileSize,
@@ -68,7 +68,7 @@ function setupTileset()
   tileQuads[2] = love.graphics.newQuad(73, 106, tileSize, tileSize,
   tilesetImage:getWidth(), tilesetImage:getHeight())
   -- cloud
-  tileQuads[3] = love.graphics.newQuad(12 * tileSize, 3 * tileSize, tileSize, tileSize,
+  tileQuads[0] = love.graphics.newQuad(12 * tileSize, 3 * tileSize, tileSize, tileSize,
   tilesetImage:getWidth(), tilesetImage:getHeight())
   
   tilesetBatch = love.graphics.newSpriteBatch(tilesetImage, tilesDisplayWidth * tilesDisplayHeight)
