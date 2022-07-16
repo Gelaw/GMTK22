@@ -266,7 +266,8 @@ end
 
 function love.load(arg)
   init()
-  projectSetup()
+  launch()
+  --projectSetup()
 end
 
 

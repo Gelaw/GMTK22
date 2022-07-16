@@ -4,6 +4,9 @@ function drawUIs()
   for u, ui in pairs(uis) do
     drawElementAndChildren(ui)
   end
+  if mouseover then
+    mouseover:drawTooltip()
+  end
 end
 
 addDrawFunction(drawUIs, 9)
@@ -48,6 +51,16 @@ function getElementOrChildOn(ui, x, y)
       return ui
     end
   end
+end
+
+function UIMouseMoved(x, y, dx, dy)
+  mouseover = nil
+  local element = getElementOn(x, y)
+  if not pressed and element and element.tooltip then
+    mouseover = element
+    return true
+  end
+  return false
 end
 
 function UIMousePress(x, y, button)
