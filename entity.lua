@@ -148,7 +148,7 @@ function newRessource(ressourceType, quantity, max)
     return ressource
 end
 
-ressourceTypes = {life = {name = "life"}}
+ressourceTypes = {life = {name = "life"}, mana = {name = "mana"}}
 
 function testLivingEntityRessource()
     local livingEntity = applyParams(newLivingEntity(), {i = 5, j=5, color={0, 1, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})

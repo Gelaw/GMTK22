@@ -27,9 +27,11 @@ function projectSetup()
   
   player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
   player.ressources.life = newRessource("life", 10, 10)
+  player.ressources.mana = newRessource("mana", 3, 3)
   player:addAction(actions.Walk({range=2}))
   player:addAction(actions.MeleeAttack())
   player:addAction(actions.Heal())
+  player:addAction(actions.MagicMissile())
   player:initEntity()
   
   animation = newAnimation(love.graphics.newImage("src/img/sprites/VolcanoTile.png"), 258, 258, 2.3, 258, 258)
@@ -94,20 +96,28 @@ function projectSetup()
             local iachoice = availableActions[math.random(#availableActions)]
             if not iachoice:try({i=player.i, j=player.j}) and not iachoice:try({i=entity.i, j=entity.j}) then
               local distance = math.dist(player.i, player.j, entity.i, entity.j)
-              local target = {entity.i, entity.j}
+              local target = {i=entity.i, j=entity.j}
+              local secondChoiceDistance = distance
+              local secondChoiceTarget = target
               for i = - iachoice.range, iachoice.range do
                 for j = -iachoice.range, iachoice.range do
-                  if manhattanDistance(entity, {i=entity.i+i, j=entity.j+j}) <= iachoice.range then
-                    local d = math.dist(player.i, player.j, entity.i+i, entity.j+j)
-                    if d < distance then
-                      target = {i=entity.i+i, j=entity.j+j}
-                      distance = d
+                  local ni, nj = entity.i+i, entity.j+j
+                  if map[ni] and map[ni][nj] and map[ni][nj] > 0 then
+                    if manhattanDistance(entity, {i=ni, j=nj}) <= iachoice.range then
+                      local d = math.dist(player.i, player.j, ni, nj)
+                      if d < distance then
+                        secondChoiceDistance = distance
+                        secondChoiceTarget = target
+                        target = {i=ni, j=nj}
+                        distance = d
+                      end
                     end
                   end
                 end
               end
-              print(target, target.i, target.j)
-              iachoice:try(target)
+              if not iachoice:try(target) then
+                iachoice:try(secondChoiceTarget)
+              end
             end
           end
         end
@@ -154,103 +164,149 @@ end
 function setupUIs()
   uis = {}
   menuRadial = { -- Dedicace Sobroniel pour le nom de variable
-  x = 0, y = height*.8,w=width, h = .2*height,
-  color = {.1, .1, .1},
-  children = {},
-  draw = function (self)
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-  end
-}
-table.insert(uis, menuRadial)
-
-playerActionsUIX = 400
-statsUI = {
-  backgroundColor = {.5, .2, .2}, textColor = {.3, .7, .7},
-  x = 10, y = 10, w = playerActionsUIX - 20, h = .2*height,
-  draw = function (self)
-    love.graphics.setColor(self.backgroundColor)
-    love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-    love.graphics.setColor(self.textColor)
-    if player and player.ressources then
-      love.graphics.print("life "..player.ressources.life.quantity.."/"..player.ressources.life.max)
+    x = 0, y = height*.8,w=width, h = .2*height,
+    color = {.1, .1, .1},
+    children = {},
+    draw = function (self)
+      love.graphics.setColor(self.color)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
     end
-  end
-}
-table.insert(menuRadial.children, statsUI)
+  }
+  table.insert(uis, menuRadial)
 
-playerActionsUI = {
-  x = playerActionsUIX, y = 10,w=width-playerActionsUIX-170, h = .2*height-10,
-  color = {.1, .1, .1},
-  draw = function (self)
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-  end,
-  children = {},
-  load = function (self)
-    if not player or not player.actions then return end
-    self.children = {}
-    x = 10
-    local child
-    for a, action in pairs(player.actions) do
-      child = {
-        x = x, y = 10, w = 150, h = 150,
-        draw = function (self)
-          love.graphics.setColor(.2, .2, .2)
-          love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-          love.graphics.setColor(1, 1, 1)
-          love.graphics.print(action.name, 5, 5)
-          love.graphics.print(action.actionType, 135, 135)
-          if action.actionType ~= game.nextTurns[1] then
-            love.graphics.setColor(1, 0, 0, .1)
-            love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-          end
-        end,
-        onClick = function (self)
-          if action.actionType == game.nextTurns[1] then
-            selectedAction = action
-          end
+  playerActionsUIX = 400
+  statsUI = {
+    backgroundColor = {.5, .2, .2}, textColor = {.3, .7, .7},
+    x = 10, y = 10, w = playerActionsUIX - 20, h = .2*height,
+    draw = function (self)
+      love.graphics.setColor(self.backgroundColor)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+      love.graphics.setColor(self.textColor)
+      if player and player.ressources then
+        local y = 0
+        for r, ressource in pairs(player.ressources) do
+          love.graphics.print(ressource.name.." "..ressource.quantity.."/"..ressource.max, 0, y)
+          y = y + 15
         end
-      }
-      x = x + 170
-      table.insert(self.children, child)
+      end
     end
-  end
-}
-playerActionsUI:load()
-table.insert(menuRadial.children, playerActionsUI)
+  }
+  table.insert(menuRadial.children, statsUI)
 
-endTurnButton = {
-  x = width - 170, y = 20, w = 150, h = 150,
-  backgroundColor = {.2, .2, .2}, textColor = {1, 1, 1}, text = "ENDTURN", textX = .5*150 - .5*love.graphics.getFont():getWidth("ENDTURN"),
-  draw = function (self)
-    love.graphics.setColor(self.backgroundColor)
-    love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-    love.graphics.setColor(self.textColor)
-    love.graphics.print(self.text, self.textX, .45*self.h)
-  end,
-  onClick = function(self)
-    game:endTurn()
-  end
-}
-table.insert(menuRadial.children, endTurnButton)
-actionOverlay = {
-  draw = function (self)
-    if selectedAction and player then
-      love.graphics.setColor(1, 1, 1, .1)
-      local dx, dy = math.floor(-zoomX*(mapI%1)*tileSize), math.floor(-zoomY*(mapJ%1)*tileSize)
-      love.graphics.translate(mapX+dx, mapY+dy)
-      for i=0, tilesDisplayWidth-1 do
-        for j=0, tilesDisplayHeight-1 do
-          if (manhattanDistance(player, {i=i, j=j})==0 and selectedAction.usableOnSelf) or (manhattanDistance(player, {i=i, j=j})>0 and manhattanDistance(player, {i=i, j=j}) <= selectedAction.range) then
-            love.graphics.rectangle("fill", (i-1)*zoomX*tileSize, (j-1)*zoomY*tileSize, zoomX*tileSize, zoomY*tileSize)
+  playerActionsUI = {
+    x = playerActionsUIX, y = 10,w=width-playerActionsUIX-170, h = .2*height-10,
+    color = {.1, .1, .1},
+    draw = function (self)
+      love.graphics.setColor(self.color)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+    end,
+    children = {},
+    load = function (self)
+      if not player or not player.actions then return end
+      self.children = {}
+      x = 10
+      local child
+      for a, action in pairs(player.actions) do
+        child = {
+          x = x, y = 10, w = 150, h = 150,
+          draw = function (self)
+            love.graphics.setColor(.2, .2, .2)
+            love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print(action.name, 5, 5)
+            love.graphics.print(action.actionType, 135, 135)
+            if action.actionType ~= game.nextTurns[1] then
+              love.graphics.setColor(1, 0, 0, .1)
+              love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+            end
+          end,
+          tooltip = {w = 200, h=200, backgroundColor = {.2, .2, .2}},
+          drawTooltip = function (self)
+            love.graphics.origin()
+            love.graphics.translate(love.mouse.getX(), love.mouse.getY() - self.tooltip.h)
+            love.graphics.setColor(self.tooltip.backgroundColor)
+            love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print("name:"..action.name, 10, 10)
+            love.graphics.print("range:"..action.range, 10, 25)
+            love.graphics.print("can be used on oneself:"..(action.usableOnSelf and "Yes" or "No"), 10, 40)
+            love.graphics.print("costs: "..(#action.cost==0 and "none" or ""), 10, 55)
+            y =  55
+            for r, ressource in pairs(action.cost) do
+              if player:isAvailable(ressource) then
+                love.graphics.setColor(0, 1, 0)
+              else
+                love.graphics.setColor(1, 0, 0)
+              end
+              love.graphics.print(ressource.quantity.." "..ressource.name, .6*self.tooltip.w, y)
+              y = y + 15
+            end
+            y = y + 15
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print("type of action: "..action.actionType, 10, y)
+            y = y + 15
+            love.graphics.print("shortcut: " .. a .. " key", 10, y)
+            y = y + 15
+            love.graphics.printf(action:getDescription(), 10, y, self.tooltip.w - 20)
+          end,
+          onClick = function (self)
+            if action.actionType == game.nextTurns[1] then
+              print(action.name)
+              selectedAction = action
+            end
+          end
+        }
+        x = x + 170
+        table.insert(self.children, child)
+      end
+    end
+  }
+  playerActionsUI:load()
+  table.insert(menuRadial.children, playerActionsUI)
+
+  endTurnButton = {
+    x = width - 170, y = 20, w = 150, h = 150,
+    backgroundColor = {.2, .2, .2}, textColor = {1, 1, 1}, text = "ENDTURN", textX = .5*150 - .5*love.graphics.getFont():getWidth("ENDTURN"),
+    draw = function (self)
+      love.graphics.setColor(self.backgroundColor)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+      love.graphics.setColor(self.textColor)
+      love.graphics.print(self.text, self.textX, .45*self.h)
+    end,
+    tooltip = {w = 200, h=200, backgroundColor = {.2, .2, .2}},
+    drawTooltip = function (self)
+      love.graphics.origin()
+      love.graphics.translate(love.mouse.getX() - self.tooltip.w, love.mouse.getY() - self.tooltip.h)
+      love.graphics.setColor(self.tooltip.backgroundColor)
+      love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.print("shortcut: spacebar", 10, 10)
+      love.graphics.printf("End your turn without using your action. Be careful the ennemies will still use theirs if they can!", 10, 50, self.tooltip.w-20)
+    end,
+    onClick = function(self)
+      game:endTurn()
+    end
+  }
+  table.insert(menuRadial.children, endTurnButton)
+  actionOverlay = {
+    draw = function (self)
+      if selectedAction and player then
+        love.graphics.setColor(1, 1, 1, .1)
+        local dx, dy = math.floor(-zoomX*(mapI%1)*tileSize), math.floor(-zoomY*(mapJ%1)*tileSize)
+        love.graphics.translate(mapX+dx, mapY+dy)
+        for i=0, tilesDisplayWidth-1 do
+          for j=0, tilesDisplayHeight-1 do
+            if map[i] and map[i][j] and map[i][j]>0 then
+              if (manhattanDistance(player, {i=i, j=j})==0 and selectedAction.usableOnSelf) or (manhattanDistance(player, {i=i, j=j})>0 and manhattanDistance(player, {i=i, j=j}) <= selectedAction.range) then
+                love.graphics.rectangle("fill", (i-1)*zoomX*tileSize, (j-1)*zoomY*tileSize, zoomX*tileSize, zoomY*tileSize)
+              end
+            end
           end
         end
       end
     end
-  end
-}
-table.insert(uis, actionOverlay)
+  }
+  table.insert(uis, actionOverlay)
 
 nextTurnUIW = 600
 nextTurnUI = {
@@ -266,6 +322,13 @@ nextTurnUI = {
   end
 }
 table.insert(uis, nextTurnUI)
+end
+
+function love.mousemoved(x, y, dx, dy)
+  local mouseoverUI = UIMouseMoved(x, y, dx, dy)
+  if not mouseoverUI then
+
+  end
 end
 
 function love.mousepressed(x, y, button, isTouch)
@@ -349,6 +412,6 @@ end
 
 
 function tests()
-  testActions()
   testLivingEntityRessource()
+  testActions()
 end
