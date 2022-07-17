@@ -5,6 +5,15 @@ require "entity"
 require "action"
 
 function projectSetup()
+  --Load images
+  --TODO modifier dice
+  local imgFolder = "src/img/"
+
+  diceImg = love.graphics.newImage("src/img/dice/dice.png")
+  actionTypes.attack.img = love.graphics.newImage("src/img/dice/attack.png")
+  actionTypes.move.img = love.graphics.newImage("/src/img/dice/move.png")
+  actionTypes.support.img = love.graphics.newImage("src/img/dice/support.png")
+  --
   love.graphics.setBackgroundColor(.3, .3, .3)
 
   GMTKScreen = {
@@ -324,13 +333,24 @@ function setupUIs()
     x= .5*(width-nextTurnUIW), y = 0,w = nextTurnUIW, h = 100,
     backgroundColor = {.1, .1, .1},
     draw = function(self)
+      --TODO draw dice
       love.graphics.setColor(self.backgroundColor)
       love.graphics.rectangle("fill", 0, 0, self.w, self.h)
       for n, turn in pairs(game.nextTurns) do
         love.graphics.setColor(.4, .3, .2)
         love.graphics.print(turn, (n-.5)*(nextTurnUIW-20)/5, 40)
+        local currImg = actionTypes[turn].img
+        local w,h = currImg:getWidth()/self.w,currImg:getHeight()/self.w
+
+        love.graphics.setColor(1,1,1)
+        love.graphics.draw(diceImg,((n-.5)*(nextTurnUIW-20)/5)-(currImg:getWidth() *w/2), 40-(currImg:getHeight() *h/2),0,w,h)
+        love.graphics.draw(currImg,((n-.5)*(nextTurnUIW-20)/5)-(currImg:getWidth() *w/2), 40-(currImg:getHeight() *h/2),0,w,h)
+
       end
     end
+    --
+    
+    --
   }
   table.insert(uis, nextTurnUI)
 
@@ -441,7 +461,6 @@ function love.keypressed(key, scancode, isrepeat)
   --https://www.youtube.com/watch?v=79DijItQXMM
   if key == "escape" then
     ShowMenu()
-    print("...")
   end
   if player and player.actions then
     if player.actions[tonumber(key)] and player.actions[tonumber(key)].actionType == game.nextTurns[1] then

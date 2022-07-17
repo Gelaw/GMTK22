@@ -59,7 +59,6 @@ function newEntity()
             self.draw = function (self)
                 love.graphics.setColor(self.color or {1, 1, 1})
                 love.graphics.translate(self.x+.5*zoomX*tileSize, self.y+.5*zoomY*tileSize-.5*self.h)
-                print(self.isDead)
                 if self.isDead and self:isDead() then
                     love.graphics.rotate(math.rad(-90))
                 end
