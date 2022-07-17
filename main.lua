@@ -249,7 +249,7 @@ types = {
   boss  = function ()
     ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {1, 1, 1}, spriteSet = {path = "src/img/sprites/mage.png", width = 20, height = 20}})
     ennemy.ressources.life = newRessource("life", 20, 30)
-    ennemy.ressources.life = newRessource("mana", 10, 10)
+    ennemy.ressources.mana = newRessource("mana", 10, 10)
 
     ennemy:addAction(actions.Walk({range=2}))
     ennemy:addAction(actions.MeleeAttack({damage = 2}))
