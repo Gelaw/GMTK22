@@ -25,6 +25,7 @@ function projectSetup()
       love.graphics.translate(self.x, self.y)
       love.graphics.draw(self.image, 0, 0, 0, width/self.image:getWidth(), height/self.image:getHeight())
       love.graphics.draw(ssLogo, 0, 0, 0, width/ssLogo:getWidth()/5, height/ssLogo:getHeight()/5)
+      love.graphics.print("Sacra Scriptura",width/ssLogo:getWidth()/5 +  100, height/ssLogo:getHeight()/5)
 
     end,
     onTermination = function ()
