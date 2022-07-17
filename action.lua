@@ -1,8 +1,8 @@
 actionTypesKeys = {"attack", "move", "support"}
 actionTypes = {
-    attack = {name = "attack"},
-    move = {name = "move"},
-    support = {name = "support"}
+    attack = {name = "attack", img = nil},
+    move = {name = "move", img = nil},
+    support = {name = "support", img = nil}
 }
 
 function newAction()
