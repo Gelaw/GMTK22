@@ -241,6 +241,7 @@ function init()
       particuleEffect = particuleEffects[pe]
       particuleEffect.timeLeft = particuleEffect.timeLeft - dt
       if particuleEffect.timeLeft <= 0 then
+        if particuleEffect.onTermination then particuleEffect:onTermination() end
         table.remove(particuleEffects, pe)
       end
     end
@@ -266,11 +267,6 @@ end
 
 function love.load(arg)
   init()
-
-  --launch()
-
-  -------
-  currScreen = "game"
   projectSetup()
 end
 
