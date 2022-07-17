@@ -9,6 +9,7 @@ function newEntity()
 
     entity.updates = {
         function (self, dt)
+            if not self.i or not self.j then return end
             local x, y = gridToScreen(self.i, self.j)
             if x ~= self.x or y ~= self.y then
                 local maxDistance = self.snappingSpeed * dt
@@ -58,7 +59,8 @@ function newEntity()
             self.draw = function (self)
                 love.graphics.setColor(self.color or {1, 1, 1})
                 love.graphics.translate(self.x+.5*zoomX*tileSize, self.y+.5*zoomY*tileSize-.5*self.h)
-                if self:isDead() then
+                print(self.isDead)
+                if self.isDead and self:isDead() then
                     love.graphics.rotate(math.rad(-90))
                 end
                 self.animation:draw()

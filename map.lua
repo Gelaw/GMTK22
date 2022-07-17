@@ -18,9 +18,19 @@ function setupMap()
   for x=1,mapWidth do
     map[x] = {}
     for y=1,mapHeight do
+      map[x][y] = 0
+    end
+  end
+end
+
+function fillMap()
+  for x=1,mapWidth do
+    map[x] = {}
+    for y=1,mapHeight do
       map[x][y] = math.random(0, 3)
     end
   end
+  updateTilesetBatch()
 end
 
 function setupMapView()
@@ -39,7 +49,10 @@ function setupMapView()
   end, 4)
 end
 
+mapHidden = true
+
 function drawMap()
+  if mapHidden then return end
   love.graphics.origin()
   love.graphics.setColor(1, 1, 1)
   love.graphics.translate(mapX, mapY)
