@@ -142,6 +142,16 @@ actions = {
             if entityTargeted and entityTargeted.hit then
                 if self.caster == player then audioManager:playSound(audioManager.sounds.magic) end
                 entityTargeted:hit(self.damage)
+                local tx, ty = gridToScreen(targetCell.i+.5, targetCell.j+.5)
+                local cx, cy = gridToScreen(self.caster.i+.5, self.caster.j+.5)
+                local Effect = {x = cx, y = cy, tx = tx, ty =ty, timeLeft = .5,
+                draw = function (self)
+                    love.graphics.setColor(.5, 0, 1, .3)
+                    love.graphics.translate(self.x + (1-self.timeLeft/.5)*(self.tx - self.x), self.y + (1-self.timeLeft/.5)*(self.ty - self.y))
+                    love.graphics.circle("fill", 0, 0, 10)
+                end}
+
+                table.insert(particuleEffects, Effect)
                 return true
             end
             return false

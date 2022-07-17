@@ -19,7 +19,6 @@ function setupMap()
     mapWidth = #handmademap[1]
     mapHeight = #handmademap
     map = {}
-    print(mapWidth, mapHeight)
     for x=1, mapWidth do
       map[x] = {}
       for y=1,mapHeight do

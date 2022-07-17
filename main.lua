@@ -67,13 +67,9 @@ function projectSetup()
 
       
       
-      
-      ennemy = applyParams(newLivingEntity(), {i = 10, j=10, w=32, h=32, color = {1, 0, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
-      ennemy.ressources.life = newRessource("life", 10, 10)
-      ennemy:addAction(actions.Walk({range=2}))
-      ennemy:addAction(actions.MeleeAttack())
-      ennemy:addAction(actions.Heal())
-      ennemy:initEntity()
+      for i = 1, 5 do
+        spawn("basic")
+      end
       
       rollDice()
     end,
@@ -182,6 +178,8 @@ function projectSetup()
     end
   }
   
+
+
   setupMap()
   setupMapView()
   setupTileset()
@@ -217,6 +215,23 @@ function projectSetup()
   diceDestination = {x=0, y=-height/2}
 end
 
+types = {
+  basic = function ()
+    ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {1, 1, 1}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+    ennemy.ressources.life = newRessource("life", 3, 3)
+    ennemy:addAction(actions.Walk())
+    ennemy:addAction(actions.MeleeAttack({damage = 1}))
+    ennemy:initEntity()
+    return ennemy
+  end
+}
+function spawn(type)
+  if types[type] then
+    local ennemy = types[type]()
+    ennemy.i, ennemy.j = math.random(10, mapWidth), math.random(10, mapHeight)
+    ennemy:initEntity()
+  end
+end
 
 function rollDice()
   diceEntity = {
@@ -327,8 +342,11 @@ function setupUIs()
       if player and player.ressources then
         local y = 0
         for r, ressource in pairs(player.ressources) do
-          love.graphics.print(ressource.name.." "..ressource.quantity.."/"..ressource.max, 0, y)
-          y = y + 15
+          local t = ressource.name.." "..ressource.quantity.." "
+          love.graphics.print(ressource.name.." "..ressource.quantity.."   "..ressource.max, 0, y)
+          local sx, sy = font:getWidth(t),  font:getHeight()/2
+          love.graphics.line(sx+3, y-5+sy, sx-3, y + 5+sy)
+          y = y + 25
         end
       end
     end
