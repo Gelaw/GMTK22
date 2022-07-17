@@ -273,9 +273,9 @@ end
 
 function rollDice()
   diceEntity = {
-    x = 0, y=0, z = 0, f = 2, timer = 0, bounceH = 150,
+    x = 0, y=0, z = 0, f = 2, timer = 0, bounceH = 300,
     n = 1, rolling = true,
-    angle = 0, speed = 300,
+    angle = 0, speed = 500,
     update = function(self, dt)
       if self.rolling then
         self.timer = self.timer + dt
@@ -284,7 +284,7 @@ function rollDice()
         self.x, self.y = self.x + self.speed*math.cos(self.angle)*dt, self.y + self.speed*math.sin(self.angle)*dt
         if oldZ > 10 and self.z < 10 then
           self.angle = math.random()*math.pi*2
-          self.bounceH = self.bounceH/2
+          self.bounceH = self.bounceH/3
           if self.bounceH < 50 then
             self.rolling = false
             self.actionType = actionTypesKeys[math.random(#actionTypesKeys)]
