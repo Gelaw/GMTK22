@@ -65,7 +65,7 @@ function projectSetup()
       setupMap()
       fillMap()
       if not player then
-        player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+        player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "src/img/sprites/knight.png", width = 20, height = 20}})
         player.ressources.life = newRessource("life", 10, 10)
         player.ressources.mana = newRessource("mana", 3, 3)
         player:addAction(actions.Walk({range=2}))
