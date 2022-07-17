@@ -70,6 +70,24 @@ function projectSetup()
       ennemy:initEntity()
 
 
+      -- diceEntity = {
+      --   x = 0, y=0, z = 0, f = 2, timer = 0,
+      --   angle = 0, speed = 300,
+      --   update = function(self, dt)
+      --     self.timer = self.timer + dt
+      --     oldZ = self.z
+      --     self.z = math.abs(math.sin(self.timer*math.pi/self.f))
+      --     self.x, self.y = self.x + self.speed*math.cos(self.angle)*dt, self.y + self.speed*math.sin(self.angle)*dt
+      --     if oldZ > 0.01 and self.z < 0.01 then
+      --       self.angle = math.random()*math.pi*2
+      --     end
+      --   end,
+      --   draw = function (self)
+      --     love.graphics.setColor(.69, .6, .9)
+      --     love.graphics.rectangle("fill", self.x, self.y-200*self.z, 80, 80)
+      --   end
+      -- }
+      -- table.insert(entities, diceEntity)
     end,
     finish = function (self)
       for e, entity in pairs(entities) do
@@ -80,6 +98,7 @@ function projectSetup()
       while #self.nextTurns < self.maxPrerolledTurns do
         table.insert(self.nextTurns, actionTypesKeys[math.random(#actionTypesKeys)])
       end
+      nextTurnUI:updateTurns()
     end,
     endTurn = function (self)
       self:playIAs()
@@ -356,27 +375,41 @@ function setupUIs()
   }
   table.insert(uis, actionOverlay)
 
-  nextTurnUIW = 600
+nextTurnUIW = 500
   nextTurnUI = {
     x= .5*(width-nextTurnUIW), y = 0,w = nextTurnUIW, h = 100,
     backgroundColor = {.1, .1, .1},
+  children = {},
     draw = function(self)
-      --TODO draw dice
       love.graphics.setColor(self.backgroundColor)
       love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+  end,
+  updateTurns = function (self)
       for n, turn in pairs(game.nextTurns) do
-        love.graphics.setColor(.4, .3, .2)
-        --love.graphics.print(turn, (n-.5)*(nextTurnUIW-20)/5, 40)
+      local child = {
+        x = (n-1)*100, y = 0, w = 100, h = 100,
+        draw = function (self)
+          love.graphics.setColor({.1, .1, .1})
+          love.graphics.rectangle("fill", 0, 0, self.w, self.h)
         local currImg = actionTypes[turn].img
-        local w,h = currImg:getWidth()/self.w,currImg:getHeight()/self.w
-
         love.graphics.setColor(1,1,1)
-        love.graphics.draw(diceImg,((n-.5)*(nextTurnUIW-20)/5)-(currImg:getWidth() *w/2), 40-(currImg:getHeight() *h/2),0,w,h)
-        love.graphics.draw(currImg,((n-.5)*(nextTurnUIW-20)/5)-(currImg:getWidth() *w/2), 40-(currImg:getHeight() *h/2),0,w,h)
 
+          love.graphics.draw(diceImg, 0, 0, 0, self.w/diceImg:getWidth(), self.h/diceImg:getHeight())
+          love.graphics.draw(currImg, 0, 0, 0, self.h/currImg:getWidth(), self.h/currImg:getHeight())
+          if n == 1 then
+            love.graphics.rectangle("line", 0, 0, self.w, self.h)
+            love.graphics.polygon("fill", .5*self.w, .9*self.h, .4*self.w, self.h, .6*self.w, self.h)
       end
     end
-
+      }
+      if n == 1 then
+        child.x = child.x - 20
+        child.w = child.w + 20
+        child.h = child.h + 20
+      end
+      table.insert(self.children, child)
+    end
+  end
   }
   table.insert(uis, nextTurnUI)
 
