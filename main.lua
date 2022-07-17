@@ -20,9 +20,12 @@ function projectSetup()
     image = love.graphics.newImage("src/img/gmtkLogo.jpg"), timeLeft = 3,
     x=-width/2, y=-height/2,
     draw = function (self)
+      local ssLogo = love.graphics.newImage("src/img/SacraScriptura.png")
       love.graphics.setColor(1, 1, 1, self.timeLeft)
       love.graphics.translate(self.x, self.y)
       love.graphics.draw(self.image, 0, 0, 0, width/self.image:getWidth(), height/self.image:getHeight())
+      love.graphics.draw(ssLogo, 0, 0, 0, width/ssLogo:getWidth()/5, height/ssLogo:getHeight()/5)
+
     end,
     onTermination = function ()
       ShowMenu()
