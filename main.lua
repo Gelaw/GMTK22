@@ -87,10 +87,14 @@ function projectSetup()
 
       
       
-      for i = 1, 1 do
-        spawn("basic")
-      end
       
+      -- for i = 1, 5 do
+      --   spawn("basic")
+      -- end
+      spawn("oneshot")
+      spawn("tank")
+      spawn("runner")
+      spawn("boss")
       rollDice()
     end,
     finish = function (self)
@@ -199,14 +203,54 @@ end
 
 types = {
   basic = function ()
-    ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {1, 1, 1}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+    ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {0.8, 0.8, 0.8}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
     ennemy.ressources.life = newRessource("life", 3, 3)
     ennemy:addAction(actions.Walk())
     ennemy:addAction(actions.MeleeAttack({damage = 1}))
     ennemy:initEntity()
     return ennemy
+  end,
+  tank = function ()
+    ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {1, 0, 1}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+    ennemy.ressources.life = newRessource("life", 10, 10)
+    ennemy:addAction(actions.Walk())
+    ennemy:addAction(actions.MeleeAttack({damage = 1}))
+    ennemy:initEntity()
+    return ennemy
+  end,
+  runner  = function ()
+    ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {0, 0, 1}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+    ennemy.ressources.life = newRessource("life", 3, 5)
+    ennemy:addAction(actions.Walk({range = 3}))
+    ennemy:addAction(actions.MeleeAttack({damage = 1}))
+
+    ennemy:initEntity()
+    return ennemy
+  end,
+  oneshot  = function ()
+    ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {1, 0, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+    ennemy.ressources.life = newRessource("life", 1, 1)
+    ennemy:addAction(actions.Walk())
+    ennemy:addAction(actions.MeleeAttack({damage = 10}))
+
+    ennemy:initEntity()
+    return ennemy
+  end,
+  boss  = function ()
+    ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {1, 1, 1}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+    ennemy.ressources.life = newRessource("life", 20, 30)
+    ennemy.ressources.life = newRessource("mana", 10, 10)
+
+    ennemy:addAction(actions.Walk({range=2}))
+    ennemy:addAction(actions.MeleeAttack({damage = 2}))
+    ennemy:addAction(actions.MagicMissile({range = 3,damage = 3}))
+    ennemy:addAction(actions.Heal({healAmout = 1}))
+
+
+    ennemy:initEntity()
+    return ennemy
   end
-}
+  }
 function spawn(type)
   if types[type] then
     local ennemy = types[type]()
