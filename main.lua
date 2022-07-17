@@ -52,18 +52,21 @@ function projectSetup()
       self.nextTurns = {"move", "move", "move", "move"}
       nextTurnUI:updateTurns()
       
+      setupMap()
       fillMap()
-
-      
-      player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
-      player.ressources.life = newRessource("life", 10, 10)
-      player.ressources.mana = newRessource("mana", 3, 3)
-      player:addAction(actions.Walk({range=2}))
-      player:addAction(actions.MeleeAttack())
-      player:addAction(actions.Heal())
-      player:addAction(actions.MagicMissile())
-      player:initEntity()
-      
+      if not player then
+        player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+        player.ressources.life = newRessource("life", 10, 10)
+        player.ressources.mana = newRessource("mana", 3, 3)
+        player:addAction(actions.Walk({range=2}))
+        player:addAction(actions.MeleeAttack())
+        player:addAction(actions.Heal())
+        player:addAction(actions.MagicMissile())
+        player:initEntity()
+      else
+        player.i, player.j = 3, 3
+        player:snapToGrid()
+      end
 
       
       
@@ -82,7 +85,7 @@ function projectSetup()
       if #self.nextTurns <1 then return end
       self:playIAs()
       if player:isDead() then
-        table.insert(uis, {
+        defeat = {
           x = 0, y = 0,
           draw = function ()
             love.graphics.push()
@@ -99,11 +102,13 @@ function projectSetup()
             1.5*victoire.s, 0)
             victoire.s = math.min(victoire.s + 1, 120)
             love.graphics.setColor(.2, .2, .2)
-            local text = "Defaite"
+            local text = "Defeat"
             love.graphics.print(text, -.5*love.graphics.getFont():getWidth(text),-.5*love.graphics.getFont():getHeight())
             love.graphics.pop()
           end
-        })
+        }
+        table.insert(uis, defeat)
+        
       end
       table.remove(self.nextTurns, 1)
       nextTurnUI:updateTurns()
@@ -152,7 +157,7 @@ function projectSetup()
         end
       end
       if c == 0 then 
-        table.insert(uis, {
+        victory = {
           x = 0, y = 0,
           draw = function ()
             love.graphics.push()
@@ -169,11 +174,13 @@ function projectSetup()
             1.5*victoire.s, 0)
             victoire.s = math.min(victoire.s + 1, 120)
             love.graphics.setColor(.2, .8, .4)
-            local text = "Victoire"
+            local text = "Victory"
             love.graphics.print(text, -.5*love.graphics.getFont():getWidth(text),-.5*love.graphics.getFont():getHeight())
             love.graphics.pop()
           end
-        })
+        }
+        level = level +1
+        table.insert(uis, victory)
       end
     end
   }
@@ -697,10 +704,12 @@ function love.mousepressed(x, y, button, isTouch)
 end
 
 function love.mousereleased(x, y, button, isTouch)
+  if defeat then ShowMenu() end
   UIMouseRelease(x, y, button)
 end
 
 function love.keypressed(key, scancode, isrepeat)
+  if defeat then ShowMenu() end
   --https://www.youtube.com/watch?v=79DijItQXMM
   if key == "escape" then
     ShowMenu()
