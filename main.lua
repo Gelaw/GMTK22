@@ -378,6 +378,7 @@ function setupUIs()
       love.graphics.printf("End your turn without using your action. Be careful the ennemies will still use theirs if they can!", 10, 50, self.tooltip.w-20)
     end,
     onClick = function(self)
+      audioManager:playSound(audioManager.sounds.click)
       game:endTurn()
     end
   }
@@ -489,7 +490,7 @@ nextTurnUIW = 500
     onClick = function (self)
       HideMenu()
       game:start()
-      audioManager:playSound(audioManager.sounds.click)
+      audioManager:playSound(audioManager.sounds.mouseclick)
       audioManager:playMusic(audioManager.musics.prairieTheme)
     end
   }
@@ -628,6 +629,7 @@ function love.keypressed(key, scancode, isrepeat)
     elseif player.actions[tonumber(key)] and player.actions[tonumber(key)].actionType ~= game.nextTurns[1] and not mapHidden then
       audioManager:playSound(audioManager.sounds.wrong)
     elseif key == "space" then
+      audioManager:playSound(audioManager.sounds.click)
       game:endTurn()
     end
   end
@@ -713,6 +715,7 @@ audioManager = {
     heal = love.audio.newSource( 'src/snd/soundEffect/snd_heroHeal.mp3', 'static' ),
     magic = love.audio.newSource( 'src/snd/soundEffect/snd_heroMagic.mp3', 'static' ),
     walk = love.audio.newSource( 'src/snd/soundEffect/snd_heroWalk.mp3', 'static' ),
+    mouseclick = love.audio.newSource( 'src/snd/soundEffect/snd_mouseClick.mp3', 'static' ),
     wrong = love.audio.newSource( 'src/snd/soundEffect/snd_wrong.mp3', 'static' )
 
 
