@@ -254,7 +254,7 @@ types = {
     ennemy:addAction(actions.Walk({range=2}))
     ennemy:addAction(actions.MeleeAttack({damage = 2}))
     ennemy:addAction(actions.MagicMissile({range = 3,damage = 3}))
-    ennemy:addAction(actions.Heal({healAmout = 1}))
+    ennemy:addAction(actions.Heal({healAmout = 1, cost = {newRessource("mana", 1)}}))
 
 
     ennemy:initEntity()
