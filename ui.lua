@@ -42,9 +42,10 @@ function getElementOrChildOn(ui, x, y)
     if x >= ui.x and x <= ui.x + w and y >= ui.y and y <= ui.y + h then
       if ui.children then
         for c, child in pairs(ui.children) do
-          local clickedElement = getElementOrChildOn(child, x - ui.x, y - ui.y)
-          if clickedElement then
-            return clickedElement
+          local element = getElementOrChildOn(child, x - ui.x, y - ui.y)
+          if element then
+            element.px, element.py = x - ui.x - child.x, y - ui.y - child.y
+            return element
           end
         end
       end
