@@ -372,6 +372,7 @@ function setupUIs()
           tooltip = {w = 600, h=300, backgroundColor = {.2, .2, .2}},
           drawTooltip = function (self)
             love.graphics.origin()
+            love.graphics.print("?", love.mouse.getX()+10, love.mouse.getY()+10)
             love.graphics.translate(love.mouse.getX()-.5*self.tooltip.w, love.mouse.getY() - self.tooltip.h)
             love.graphics.setColor(self.tooltip.backgroundColor)
             love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
