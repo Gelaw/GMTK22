@@ -25,6 +25,7 @@ function newAction()
         isCostAvailable = function (self)
             for r, ressource in pairs(self.cost) do
                 if not self.caster:isAvailable(ressource) then
+                    if self.caster == player then audioManager:playSound(audioManager.sounds.wrong) end
                     return false
                 end
             end
@@ -82,7 +83,7 @@ actions = {
             return false
         end
         meleeAttack.getDescription = function(self)
-            return "Deals "..self.damage.." point(s) of damage at close range. A target is required."
+            return "Deals "..self.damage.." point(s) of damage at close range.\n A target is required."
         end
         return applyParams(meleeAttack, params)
     end,
@@ -99,7 +100,19 @@ actions = {
         end
         walk.activate = function (self, targetCell)
             if self.caster == player then audioManager:playSound(audioManager.sounds.walk) end
-            return self.caster:move(targetCell.i, targetCell.j)
+            local temp = {gridToScreen(self.caster.i+.5, self.caster.j+.5)}
+            if self.caster:move(targetCell.i, targetCell.j) then
+                table.insert(particuleEffects, {x=temp[1], y= temp[2], timeLeft = .5, draw = function(self)
+                    love.graphics.setColor(1, 1, 1, self.timeLeft)
+                    local time = love.timer.getTime()
+                    for i = 1, 3 do
+                        local x, y = 15*math.sin(i*time), 15*math.cos(i*time)
+                        love.graphics.rectangle("fill", x+self.x-5, y+self.y-5, 10, 10)
+                    end
+                end})
+                return true
+            end
+            return false
         end
         walk.getDescription = function (self)
             return "Moves up to "..self.range.." tiles."
@@ -123,7 +136,7 @@ actions = {
             return false
         end
         magicMissile.getDescription = function (self)
-            return "Expends mana to fire a projectile dealing "..self.damage.." to the target. A target is required."
+            return "Expends mana to fire a projectile dealing "..self.damage.." to the target.\n A target is required."
         end
         return applyParams(magicMissile, params)
     end
