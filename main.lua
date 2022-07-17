@@ -7,8 +7,6 @@ require "action"
 function projectSetup()
   --Load images
   --TODO modifier dice
-  local imgFolder = "src/img/"
-
   diceImg = love.graphics.newImage("src/img/dice/dice.png")
   actionTypes.attack.img = love.graphics.newImage("src/img/dice/attack.png")
   actionTypes.move.img = love.graphics.newImage("/src/img/dice/move.png")
@@ -24,8 +22,10 @@ function projectSetup()
       love.graphics.setColor(1, 1, 1, self.timeLeft)
       love.graphics.translate(self.x, self.y)
       love.graphics.draw(self.image, 0, 0, 0, width/self.image:getWidth(), height/self.image:getHeight())
+      love.graphics.setColor(1,1,1)
+      love.graphics.circle("fill",ssLogo:getWidth()/10+1,ssLogo:getHeight()/10,105)
       love.graphics.draw(ssLogo, 0, 0, 0, width/ssLogo:getWidth()/5, height/ssLogo:getHeight()/5)
-      love.graphics.print("Sacra Scriptura",width/ssLogo:getWidth()/5 +  100, height/ssLogo:getHeight()/5)
+      love.graphics.print("Sacra Scriptura",ssLogo:getWidth()/20, ssLogo:getHeight()/5)
 
     end,
     onTermination = function ()
