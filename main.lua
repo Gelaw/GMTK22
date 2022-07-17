@@ -487,6 +487,7 @@ nextTurnUIW = 500
     onClick = function (self)
       HideMenu()
       game:start()
+      audioManager:playSound(audioManager.sounds.click)
       audioManager:playMusic(audioManager.musics.prairieTheme)
     end
   }
@@ -595,6 +596,7 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.mousepressed(x, y, button, isTouch)
+    --audioManager:playSound(audioManager.sounds.walk)
     local press = UIMousePress(x, y , button)
     if not press then
       local i, j = screenToGrid(x, y)
@@ -702,7 +704,12 @@ audioManager = {
   end,
 
   sounds = {
-    click = love.audio.newSource( 'src/snd/soundEffect/snd_btnClick.mp3', 'static' )
+    click = love.audio.newSource( 'src/snd/soundEffect/snd_btnClick.mp3', 'static' ),
+    attack = love.audio.newSource( 'src/snd/soundEffect/snd_heroattack.mp3', 'static' ),
+    heal = love.audio.newSource( 'src/snd/soundEffect/snd_heroHeal.mp3', 'static' ),
+    magic = love.audio.newSource( 'src/snd/soundEffect/snd_heroMagic.mp3', 'static' ),
+    walk = love.audio.newSource( 'src/snd/soundEffect/snd_heroWalk.mp3', 'static' )
+
   },
   SEVolume = 1, muteSE = false,
   playingSounds = {},
