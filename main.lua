@@ -246,7 +246,7 @@ types = {
     return ennemy
   end,
   boss  = function ()
-    ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {1, 1, 1}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+    ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {1, 1, 1}, spriteSet = {path = "src/img/sprites/mage.png", width = 20, height = 20}})
     ennemy.ressources.life = newRessource("life", 20, 30)
     ennemy.ressources.life = newRessource("mana", 10, 10)
 
@@ -889,7 +889,7 @@ audioManager = {
   
   sounds = {
     click = love.audio.newSource( 'src/snd/soundEffect/snd_btnClick.mp3', 'static' ),
-    attack = love.audio.newSource( 'src/snd/soundEffect/snd_heroattack.mp3', 'static' ),
+    attack = love.audio.newSource( 'src/snd/soundEffect/snd_heroAttack.mp3', 'static' ),
     heal = love.audio.newSource( 'src/snd/soundEffect/snd_heroHeal.mp3', 'static' ),
     magic = love.audio.newSource( 'src/snd/soundEffect/snd_heroMagic.mp3', 'static' ),
     walk = love.audio.newSource( 'src/snd/soundEffect/snd_heroWalk.mp3', 'static' ),
