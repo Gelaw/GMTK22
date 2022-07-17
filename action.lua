@@ -25,6 +25,7 @@ function newAction()
         isCostAvailable = function (self)
             for r, ressource in pairs(self.cost) do
                 if not self.caster:isAvailable(ressource) then
+                    if self.caster == player then audioManager:playSound(audioManager.sounds.wrong) end
                     return false
                 end
             end
@@ -58,6 +59,8 @@ actions = {
         end
         heal.activate = function (self)
             self.caster:credit(newRessource("life", self.healAmout))
+            if self.caster == player then audioManager:playSound(audioManager.sounds.heal) end
+
             return true
         end
         heal.getDescription = function(self)
@@ -73,6 +76,7 @@ actions = {
         meleeAttack.activate = function (self, targetCell)
             local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
             if entityTargeted and entityTargeted.hit then
+                if self.caster == player then audioManager:playSound(audioManager.sounds.attack) end
                 entityTargeted:hit(self.damage)
                 return true
             end
@@ -95,6 +99,7 @@ actions = {
             end
         end
         walk.activate = function (self, targetCell)
+            if self.caster == player then audioManager:playSound(audioManager.sounds.walk) end
             return self.caster:move(targetCell.i, targetCell.j)
         end
         walk.getDescription = function (self)
@@ -112,6 +117,7 @@ actions = {
         magicMissile.activate = function (self, targetCell)
             local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
             if entityTargeted and entityTargeted.hit then
+                if self.caster == player then audioManager:playSound(audioManager.sounds.magic) end
                 entityTargeted:hit(self.damage)
                 return true
             end
