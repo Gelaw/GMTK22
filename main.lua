@@ -6,7 +6,7 @@ require "action"
 
 function projectSetup()
   love.graphics.setBackgroundColor(.3, .3, .3)
-
+  love.graphics.setNewFont("src/fonts/Quantum.otf", 25)
   GMTKScreen = {
     image = love.graphics.newImage("src/img/gmtkLogo.jpg"), timeLeft = 3,
     x=-width/2, y=-height/2,
@@ -170,7 +170,32 @@ function projectSetup()
   setupMapView()
   setupTileset()
   setupUIs()
+  for i, ui in pairs(uis) do
+    ui.hidden = true
+  end
 
+  
+  ShowMenu = function ()
+    for i, ui in pairs(uis) do
+      ui.hidden = true
+    end
+    mapHidden = true
+    ExitButton.hidden = false
+    OptionButton.hidden = false
+    StartButton.hidden = false
+    audioManagerUI.hidden = false
+    game:finish()
+    audioManager:playMusic(audioManager.musics.mainTheme)
+  end
+  HideMenu = function ()
+    for i, ui in pairs(uis) do
+      ui.hidden = false
+    end
+    ExitButton.hidden = true
+    OptionButton.hidden = true
+    StartButton.hidden = true
+    mapHidden = false
+  end
 end
 
 function setupUIs()
@@ -263,7 +288,6 @@ function setupUIs()
           end,
           onClick = function (self)
             if action.actionType == game.nextTurns[1] then
-              print(action.name)
               selectedAction = action
             end
           end
@@ -383,32 +407,104 @@ function setupUIs()
     onClick = function (self)
       HideMenu()
       game:start()
+      audioManager:playMusic(audioManager.musics.prairieTheme)
     end
   }
   table.insert(uis, StartButton)
 
-  ShowMenu = function ()
-    for i, ui in pairs(uis) do
-      ui.hidden = true
+
+
+  audioManagerUI = {
+    x = 0, y = 0, w = 100, h= 350,
+    backgroundColor = {.2, .2, .2},
+    children = {
+      {
+        x = 10, y = 10, w = 80, h = 20,
+        draw = function (self)
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.print("Music:")
+        end
+      },
+        --muteMusicButton
+      {
+        x = 10, y = 40, 
+        w = 50, h = 50,
+        draw = function (self)
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.rectangle("line", 0, 0, self.w, self.h)
+          if audioManager.mute then
+            love.graphics.print("mute", 5, 5)
+          else
+            love.graphics.print("unmute", 5, 5)
+          end
+        end,
+        onClick = function (self)
+          audioManager:toggleMute()
+          print(self.px, self.py)
+        end
+      },
+      --slider
+      {
+        x = 10, y = 110,
+        w = 80, h = 50,
+        draw = function (self)
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.rectangle("line", 0, .5*self.h, self.w, 2)
+          love.graphics.rectangle("line", audioManager.musicVolume*self.w, 0, .1*self.w, self.h)
+        end,
+        onClick = function (self)
+          if self.px and self.py then
+            audioManager:changeMusicVolume(self.px/self.w)
+          end
+        end
+      },
+      {
+        x = 10, y = 180, w = 80, h = 20,
+        draw = function (self)
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.print("Sound effects:")
+        end
+      },
+        --muteMusicButton
+      {
+        x = 10, y = 220, 
+        w = 50, h = 50,
+        draw = function (self)
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.rectangle("line", 0, 0, self.w, self.h)
+          if audioManager.muteSE then
+            love.graphics.print("mute", 5, 5)
+          else
+            love.graphics.print("unmute", 5, 5)
     end
-    mapHidden = true
-    ExitButton.hidden = false
-    OptionButton.hidden = false
-    StartButton.hidden = false
-    game:finish()
+        end,
+        onClick = function (self)
+          audioManager:toggleMuteSE()
+          print(self.px, self.py)
   end
-  HideMenu = function ()
-    for i, ui in pairs(uis) do
-      ui.hidden = false
+      },
+      --slider Effects
+      {
+        x = 10, y = 290,
+        w = 80, h = 50,
+        draw = function (self)
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.rectangle("line", 0, .5*self.h, self.w, 2)
+          love.graphics.rectangle("line", audioManager.SEVolume*self.w, 0, .1*self.w, self.h)
+        end,
+        onClick = function (self)
+          if self.px and self.py then
+            audioManager:changeSEVolume(self.px/self.w)
     end
-    ExitButton.hidden = true
-    OptionButton.hidden = true
-    StartButton.hidden = true
-    mapHidden = false
   end
-  for i, ui in pairs(uis) do
-    ui.hidden = true
+      }
+    },
+    draw = function (self)
+      love.graphics.setColor(self.backgroundColor)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
   end
+  }
+  table.insert(uis, audioManagerUI)
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -491,3 +587,42 @@ function tests()
   testLivingEntityRessource()
   testActions()
 end
+
+audioManager = {
+  musics = {
+    mainTheme = love.audio.newSource( 'src/snd/test3.mp3', 'static' ),
+    prairieTheme = love.audio.newSource( 'src/snd/prairie.mp3', 'static' )
+  },
+  musicVolume = .05, mute = false, SEVolume = .1, muteSE = false,
+  toggleMute = function(self, forced)
+    self.mute = forced or not self.mute
+    if self.mute then
+      love.audio.pause()
+    elseif self.music then
+      self.music:play()
+    end
+  end,
+  changeMusicVolume = function (self, newVolume)
+    self.musicVolume = newVolume
+    if self.music then
+      self.music:setVolume(self.musicVolume)
+    end
+  end,
+  toggleMuteSE = function(self, forced)
+
+  end,
+  changeSEVolume = function (self, newVolume)
+
+  end,
+  playMusic = function (self, music)
+    if self.music == music then return end
+    if self.music then
+      self.music:stop()
+      self.music:seek(0)
+    end
+    self.music = music
+    self.music:play()
+    self.music:setVolume(self.musicVolume)
+    self.music:setLooping(true)
+  end
+}
