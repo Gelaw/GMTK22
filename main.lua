@@ -9,9 +9,9 @@ function launch()
   currScreen = "home"
   addDrawFunction(function ()
     love.graphics.setBackgroundColor(122/255, 41/255,24/255)
-    local btnExit = love.graphics.newImage("src/img/Options/EXIT.png")
-    local btnOptions = love.graphics.newImage("src/img/Options/options.png")
-    local btnStart = love.graphics.newImage("src/img/Options/start.png")
+    btnExit = love.graphics.newImage("src/img/Options/EXIT.png")
+    btnOptions = love.graphics.newImage("src/img/Options/options.png")
+    btnStart = love.graphics.newImage("src/img/Options/start.png")
     love.graphics.draw(btnExit,0 ,0)
     love.graphics.draw(btnOptions,0,50)
     love.graphics.draw(btnStart,0 ,100)
@@ -40,7 +40,7 @@ function projectSetup()
     love.graphics.translate(.5*(-width+258), .5*(-height+258))
     animation:draw()
   end)
-  addUpdateFunction(function (dt) animation:upOdate(dt) end)
+  addUpdateFunction(function (dt) animation:update(dt) end)
 
   game = {
     nTurn = 1,

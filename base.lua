@@ -266,12 +266,12 @@ end
 
 function love.load(arg)
   init()
-  
-  launch()
+
+  --launch()
 
   -------
-  --currScreen = "game"
-  --projectSetup()
+  currScreen = "game"
+  projectSetup()
 end
 
 
