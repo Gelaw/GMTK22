@@ -29,7 +29,7 @@ function newEntity()
     end
     
     entity.move = function(self, newI, newJ)
-        if not map[newI] or not map[newI][newJ] or map[newI][newJ]  < 1 then return false end
+        if not map[newI] or not map[newI][newJ] then return false end
         local entityOnNewPos = getEntityOn(newI, newJ)
         if not entityOnNewPos or not entityOnNewPos.blockPath then
             self.i, self.j = newI, newJ

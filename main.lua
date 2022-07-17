@@ -3,6 +3,7 @@ require "ui"
 require "map"
 require "entity"
 require "action"
+require "mapFile"
 
 function projectSetup()
   --Load images
@@ -63,9 +64,7 @@ function projectSetup()
       player:addAction(actions.MagicMissile())
       player:initEntity()
       
-      volcano = applyParams(newEntity(), {x=-width/2, h=-height/2, w=258, h=258, spriteSet = {path = "src/img/sprites/VolcanoTile.png", width = 258, height = 258, duration = 2.3}})
-      animation = newAnimation(love.graphics.newImage("src/img/sprites/VolcanoTile.png"), 258, 258, 2.3, 258, 258)
-      volcano:initEntity()
+
       
       
       
@@ -84,6 +83,7 @@ function projectSetup()
       end
     end,
     endTurn = function (self)
+      if #self.nextTurns <1 then return end
       self:playIAs()
       if player:isDead() then
         table.insert(uis, {
