@@ -70,24 +70,49 @@ function projectSetup()
       ennemy:initEntity()
 
 
-      -- diceEntity = {
-      --   x = 0, y=0, z = 0, f = 2, timer = 0,
-      --   angle = 0, speed = 300,
-      --   update = function(self, dt)
-      --     self.timer = self.timer + dt
-      --     oldZ = self.z
-      --     self.z = math.abs(math.sin(self.timer*math.pi/self.f))
-      --     self.x, self.y = self.x + self.speed*math.cos(self.angle)*dt, self.y + self.speed*math.sin(self.angle)*dt
-      --     if oldZ > 0.01 and self.z < 0.01 then
-      --       self.angle = math.random()*math.pi*2
-      --     end
-      --   end,
-      --   draw = function (self)
-      --     love.graphics.setColor(.69, .6, .9)
-      --     love.graphics.rectangle("fill", self.x, self.y-200*self.z, 80, 80)
-      --   end
-      -- }
-      -- table.insert(entities, diceEntity)
+      diceEntity = {
+        x = 0, y=0, z = 0, f = 2, timer = 0,
+        n = 1,
+        images = {
+          love.graphics.newImage("src/img/dice_frame/deP1.png"),
+          love.graphics.newImage("src/img/dice_frame/deP2.png"),
+          love.graphics.newImage("src/img/dice_frame/deP3.png"),
+          love.graphics.newImage("src/img/dice_frame/deP4.png"),
+          love.graphics.newImage("src/img/dice_frame/deP5.png")
+        },
+        angle = 0, speed = 300,
+        update = function(self, dt)
+          self.timer = self.timer + dt
+          oldZ = self.z
+          self.z = math.abs(math.sin(self.timer*math.pi/self.f))
+          self.x, self.y = self.x + self.speed*math.cos(self.angle)*dt, self.y + self.speed*math.sin(self.angle)*dt
+          if oldZ > 0.01 and self.z < 0.01 then
+            self.angle = math.random()*math.pi*2
+          end
+          if math.random() > .5 then
+            self.n = self.n%#self.images + 1
+          end
+        end,
+        draw = function (self)
+          love.graphics.setColor(1, 1, 1)
+          local image = self.images[self.n]
+          local w, h = .5*image:getWidth(), .5*image:getHeight()
+          love.graphics.push()
+          love.graphics.setColor(0, 0, 0, .1)
+          love.graphics.translate(self.x+.5*w, self.y+.5*h)
+          love.graphics.rotate(math.random()*.5)
+          love.graphics.translate(-.5*w, -.5*h)
+          love.graphics.draw(image, 0, 0, 0, .5, .5)
+          love.graphics.pop()
+          love.graphics.setColor(1, 1, 1)
+          love.graphics.translate(self.x+.5*w, self.y-200*self.z+.5*h)
+          love.graphics.rotate(math.random()*.5)
+          love.graphics.translate(-.5*w, -.5*h)
+          love.graphics.draw(image, 0, 0, 0, .5, .5)
+          love.graphics.rectangle("line", 0, 0, w, h)
+        end
+      }
+      table.insert(entities, diceEntity)
     end,
     finish = function (self)
       for e, entity in pairs(entities) do
@@ -647,7 +672,8 @@ audioManager = {
     mainTheme = love.audio.newSource( 'src/snd/test3.mp3', 'static' ),
     prairieTheme = love.audio.newSource( 'src/snd/prairie.mp3', 'static' )
   },
-  musicVolume = .05, mute = false, SEVolume = .1, muteSE = false,
+  musicVolume = .05, mute = false,
+
   toggleMute = function(self, forced)
     self.mute = forced or not self.mute
     if self.mute then
@@ -662,12 +688,7 @@ audioManager = {
       self.music:setVolume(self.musicVolume)
     end
   end,
-  toggleMuteSE = function(self, forced)
 
-  end,
-  changeSEVolume = function (self, newVolume)
-
-  end,
   playMusic = function (self, music)
     if self.music == music then return end
     if self.music then
@@ -678,5 +699,43 @@ audioManager = {
     self.music:play()
     self.music:setVolume(self.musicVolume)
     self.music:setLooping(true)
+  end,
+
+  sounds = {
+    click = love.audio.newSource( 'src/snd/soundEffect/snd_btnClick.mp3', 'static' )
+  },
+  SEVolume = 1, muteSE = false,
+  playingSounds = {},
+
+  toggleMuteSE = function(self, forced)
+    self.muteSE = forced or not self.muteSE
+    for s, sound in pairs(self.playingSounds) do
+      sound:stop()
+    end
+    self.playingSounds = {}
+  end,
+
+  changeSEVolume = function (self, newVolume)
+    self.SEVolume = newVolume
+    for s, sound in pairs(self.playingSounds) do
+      sound:setVolume(newVolume)
+    end
+  end,
+
+  playSound = function (self, sound)
+    if self.muteSE then return end
+    local clone = sound:clone()
+    clone:setVolume(self.SEVolume)
+    table.insert(self.playingSounds, clone)
+    clone:play()
+    self:cleanPlayingSounds()
+  end,
+
+  cleanPlayingSounds = function (self)
+    for s = #self.playingSounds, 1, -1 do
+      if not self.playingSounds[s]:isPlaying() then
+        table.remove(self.playingSounds, s)
+      end
+    end
   end
 }
