@@ -346,6 +346,8 @@ function setupUIs()
           onClick = function (self)
             if action.actionType == game.nextTurns[1] then
               selectedAction = action
+            else
+              audioManager:playSound(audioManager.sounds.wrong)
             end
           end
         }
@@ -604,7 +606,7 @@ function love.mousepressed(x, y, button, isTouch)
         if selectedAction then
           if selectedAction:try({i=i, j=j}) then
             game:endTurn()
-          end
+            end
         end
         selectedAction = nil
       end
@@ -623,6 +625,8 @@ function love.keypressed(key, scancode, isrepeat)
   if player and player.actions then
     if player.actions[tonumber(key)] and player.actions[tonumber(key)].actionType == game.nextTurns[1] then
       selectedAction = player.actions[tonumber(key)]
+    elseif player.actions[tonumber(key)] and player.actions[tonumber(key)].actionType ~= game.nextTurns[1] and not mapHidden then
+      audioManager:playSound(audioManager.sounds.wrong)
     elseif key == "space" then
       game:endTurn()
     end
@@ -708,7 +712,9 @@ audioManager = {
     attack = love.audio.newSource( 'src/snd/soundEffect/snd_heroattack.mp3', 'static' ),
     heal = love.audio.newSource( 'src/snd/soundEffect/snd_heroHeal.mp3', 'static' ),
     magic = love.audio.newSource( 'src/snd/soundEffect/snd_heroMagic.mp3', 'static' ),
-    walk = love.audio.newSource( 'src/snd/soundEffect/snd_heroWalk.mp3', 'static' )
+    walk = love.audio.newSource( 'src/snd/soundEffect/snd_heroWalk.mp3', 'static' ),
+    wrong = love.audio.newSource( 'src/snd/soundEffect/snd_wrong.mp3', 'static' )
+
 
   },
   SEVolume = 1, muteSE = false,
