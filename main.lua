@@ -366,7 +366,7 @@ function setupUIs()
       love.graphics.rectangle("fill", 0, 0, self.w, self.h)
       for n, turn in pairs(game.nextTurns) do
         love.graphics.setColor(.4, .3, .2)
-        love.graphics.print(turn, (n-.5)*(nextTurnUIW-20)/5, 40)
+        --love.graphics.print(turn, (n-.5)*(nextTurnUIW-20)/5, 40)
         local currImg = actionTypes[turn].img
         local w,h = currImg:getWidth()/self.w,currImg:getHeight()/self.w
 
@@ -376,9 +376,7 @@ function setupUIs()
 
       end
     end
-    --
-    
-    --
+
   }
   table.insert(uis, nextTurnUI)
 
