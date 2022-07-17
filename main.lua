@@ -109,6 +109,7 @@ function projectSetup()
     end,
     finish = function (self)
       self.level = 0
+      player = nil
       for e, entity in pairs(entities) do
         entity.terminated = true
       end
@@ -240,7 +241,7 @@ types = {
     ennemy = applyParams(newLivingEntity(), {w=32, h=32, color = {1, 0, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
     ennemy.ressources.life = newRessource("life", 1, 1)
     ennemy:addAction(actions.Walk())
-    ennemy:addAction(actions.MeleeAttack({damage = 10}))
+    ennemy:addAction(actions.MeleeAttack({damage = 5}))
 
     ennemy:initEntity()
     return ennemy
