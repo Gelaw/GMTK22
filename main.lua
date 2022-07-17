@@ -52,7 +52,7 @@ function projectSetup()
   game = {
     gameState = "unlaunched",
     nTurn = 1,
-    level = 0,
+    level = 10,
     maxPrerolledTurns = 5,
     nextTurns = {},
     start = function(self)
@@ -84,17 +84,27 @@ function projectSetup()
         player.ressources.mana.quantity = player.ressources.mana.max
         player:snapToGrid()
       end
-
-      
-      
-      
-      -- for i = 1, 5 do
-      --   spawn("basic")
-      -- end
-      spawn("oneshot")
-      spawn("tank")
-      spawn("runner")
-      spawn("boss")
+      print(game.level)
+      spawnTypes = {"oneshot"}
+      if game.level >= 2 then
+        table.insert(spawnTypes, "basic")
+      end
+      if game.level >= 3 then
+        table.insert(spawnTypes, "runner")
+      end
+      if game.level >= 5 then
+        table.insert(spawnTypes, "tank")
+      end
+      if game.level >= 10 then
+        table.insert(spawnTypes, "boss")
+      end
+      forces = 0
+      forceTable = {1, 2, 1, 4, 12}
+      while forces < game.level do
+        n = math.random(#spawnTypes)
+        forces = forces + forceTable[n]
+        spawn(spawnTypes[n])
+      end
       rollDice()
     end,
     finish = function (self)
@@ -107,8 +117,7 @@ function projectSetup()
       if #self.nextTurns <1 then return end
       self:playIAs()
       if player:isDead() then
-
-        
+        defeat.hidden = false
       end
       table.remove(self.nextTurns, 1)
       nextTurnUI:updateTurns()
@@ -251,11 +260,13 @@ types = {
     return ennemy
   end
   }
+
 function spawn(type)
   if types[type] then
     local ennemy = types[type]()
-    ennemy.i, ennemy.j = math.random(10, mapWidth), math.random(10, mapHeight)
+    ennemy.i, ennemy.j = math.random(8, mapWidth), math.random(8, mapHeight)
     ennemy:initEntity()
+    return ennemy
   end
 end
 
@@ -782,6 +793,10 @@ function love.keypressed(key, scancode, isrepeat)
     game:start()
   end
   if not defeat.hidden then ShowMenu() end
+  if love.keyboard.isDown("lctrl") and love.keyboard.isDown("rctrl") then
+   victory.hidden = false
+  end
+
   --https://www.youtube.com/watch?v=79DijItQXMM
   if key == "escape" then
     ShowMenu()
