@@ -4,48 +4,65 @@ require "map"
 require "entity"
 require "action"
 
-function launch()
-  --Faire ecran demarrage
-  currScreen = "home"
-  addDrawFunction(function ()
-    love.graphics.setBackgroundColor(122/255, 41/255,24/255)
-    local btnExit = love.graphics.newImage("src/img/Options/EXIT.png")
-    local btnOptions = love.graphics.newImage("src/img/Options/options.png")
-    local btnStart = love.graphics.newImage("src/img/Options/start.png")
-    love.graphics.draw(btnExit,0 ,0)
-    love.graphics.draw(btnOptions,0,50)
-    love.graphics.draw(btnStart,0 ,100)
-  end)  
-end
-
 function projectSetup()
   love.graphics.setBackgroundColor(.3, .3, .3)
-  
-  setupMap()
-  setupMapView()
-  setupTileset()
-  
-  player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
-  player.ressources.life = newRessource("life", 10, 10)
-  player.ressources.mana = newRessource("mana", 3, 3)
-  player:addAction(actions.Walk({range=2}))
-  player:addAction(actions.MeleeAttack())
-  player:addAction(actions.Heal())
-  player:addAction(actions.MagicMissile())
-  player:initEntity()
-  
-  animation = newAnimation(love.graphics.newImage("src/img/sprites/VolcanoTile.png"), 258, 258, 2.3, 258, 258)
-  addDrawFunction(function ()
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.translate(.5*(-width+258), .5*(-height+258))
-    animation:draw()
-  end)
-  addUpdateFunction(function (dt) animation:upOdate(dt) end)
+
+  GMTKScreen = {
+    image = love.graphics.newImage("src/img/gmtkLogo.jpg"), timeLeft = 3,
+    x=-width/2, y=-height/2,
+    draw = function (self)
+      love.graphics.setColor(1, 1, 1, self.timeLeft)
+      love.graphics.translate(self.x, self.y)
+      love.graphics.draw(self.image, 0, 0, 0, width/self.image:getWidth(), height/self.image:getHeight())
+    end,
+    onTermination = function ()
+      ShowMenu()
+    end
+  }
+  table.insert(particuleEffects, GMTKScreen)
 
   game = {
+    gameState = "unlaunched",
     nTurn = 1,
     maxPrerolledTurns = 5,
-    nextTurns = {"move", "move", "move", "move", "move"},
+    nextTurns = {},
+    start = function(self)
+      self.nTurn = 1
+      self.nextTurns = {"move", "move", "move"}
+
+      self:fillTurns()
+
+      fillMap()
+
+      player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+      player.ressources.life = newRessource("life", 10, 10)
+      player.ressources.mana = newRessource("mana", 3, 3)
+      player:addAction(actions.Walk({range=2}))
+      player:addAction(actions.MeleeAttack())
+      player:addAction(actions.Heal())
+      player:addAction(actions.MagicMissile())
+      player:initEntity()
+      
+      volcano = applyParams(newEntity(), {x=-width/2, h=-height/2, w=258, h=258, spriteSet = {path = "src/img/sprites/VolcanoTile.png", width = 258, height = 258, duration = 2.3}})
+      animation = newAnimation(love.graphics.newImage("src/img/sprites/VolcanoTile.png"), 258, 258, 2.3, 258, 258)
+      volcano:initEntity()
+    
+    
+      
+      ennemy = applyParams(newLivingEntity(), {i = 10, j=10, w=32, h=32, color = {1, 0, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+      ennemy.ressources.life = newRessource("life", 10, 10)
+      ennemy:addAction(actions.Walk({range=2}))
+      ennemy:addAction(actions.MeleeAttack())
+      ennemy:addAction(actions.Heal())
+      ennemy:initEntity()
+
+
+    end,
+    finish = function (self)
+      for e, entity in pairs(entities) do
+        entity.terminated = true
+      end
+    end,
     fillTurns = function (self)
       while #self.nextTurns < self.maxPrerolledTurns do
         table.insert(self.nextTurns, actionTypesKeys[math.random(#actionTypesKeys)])
@@ -84,7 +101,7 @@ function projectSetup()
     playIAs = function (self)
       local c = 0
       for e, entity in pairs(entities) do
-        if entity ~= player and not entity:isDead() then
+        if entity ~= player and entity.isDead and not entity:isDead() then
           c = c + 1
           local availableActions = {}
           for a, action in pairs(entity.actions) do
@@ -148,21 +165,15 @@ function projectSetup()
       end
     end
   }
-  
-  ennemy = applyParams(newLivingEntity(), {i = 10, j=10, w=32, h=32, color = {1, 0, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
-  ennemy.ressources.life = newRessource("life", 10, 10)
-  ennemy:addAction(actions.Walk({range=2}))
-  ennemy:addAction(actions.MeleeAttack())
-  ennemy:addAction(actions.Heal())
-  ennemy:initEntity()
-  
+
+  setupMap()
+  setupMapView()
+  setupTileset()
   setupUIs()
-  tests()
+
 end
 
-
 function setupUIs()
-  uis = {}
   menuRadial = { -- Dedicace Sobroniel pour le nom de variable
     x = 0, y = height*.8,w=width, h = .2*height,
     color = {.1, .1, .1},
@@ -197,11 +208,12 @@ function setupUIs()
     x = playerActionsUIX, y = 10,w=width-playerActionsUIX-170, h = .2*height-10,
     color = {.1, .1, .1},
     draw = function (self)
+      if player and #player.actions>0 and #self.children == 0 then self:loadPlayerActions() end
       love.graphics.setColor(self.color)
       love.graphics.rectangle("fill", 0, 0, self.w, self.h)
     end,
     children = {},
-    load = function (self)
+    loadPlayerActions = function (self)
       if not player or not player.actions then return end
       self.children = {}
       x = 10
@@ -261,7 +273,6 @@ function setupUIs()
       end
     end
   }
-  playerActionsUI:load()
   table.insert(menuRadial.children, playerActionsUI)
 
   endTurnButton = {
@@ -308,20 +319,96 @@ function setupUIs()
   }
   table.insert(uis, actionOverlay)
 
-nextTurnUIW = 600
-nextTurnUI = {
-  x= .5*(width-nextTurnUIW), y = 0,w = nextTurnUIW, h = 100,
-  backgroundColor = {.1, .1, .1},
-  draw = function(self)
-    love.graphics.setColor(self.backgroundColor)
-    love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-    for n, turn in pairs(game.nextTurns) do
-      love.graphics.setColor(.4, .3, .2)
-      love.graphics.print(turn, (n-.5)*(nextTurnUIW-20)/5, 40)
+  nextTurnUIW = 600
+  nextTurnUI = {
+    x= .5*(width-nextTurnUIW), y = 0,w = nextTurnUIW, h = 100,
+    backgroundColor = {.1, .1, .1},
+    draw = function(self)
+      love.graphics.setColor(self.backgroundColor)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+      for n, turn in pairs(game.nextTurns) do
+        love.graphics.setColor(.4, .3, .2)
+        love.graphics.print(turn, (n-.5)*(nextTurnUIW-20)/5, 40)
+      end
     end
+  }
+  table.insert(uis, nextTurnUI)
+
+  
+  local image = love.graphics.newImage("src/img/Options/EXIT.png")
+  local subImage = {x = 23, y= 54, w=85, h=22}
+  local quad = love.graphics.newQuad(subImage.x, subImage.y, subImage.w, subImage.h, image)
+  ExitButton = {
+    x = .5*(width - subImage.w), y = .5*height -3* subImage.h,
+    w = subImage.w, h = subImage.h, image = image, quad = quad,
+    hidden = true,
+    draw = function (self)
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.draw(self.image, self.quad, 0, 0)
+    end,
+    onClick = function (self)
+      love.event.quit()
+    end
+  }
+  table.insert(uis, ExitButton)
+
+  local image = love.graphics.newImage("src/img/Options/options.png")
+  local subImage = {x = 23, y= 54, w=85, h=22}
+  local quad = love.graphics.newQuad(subImage.x, subImage.y, subImage.w, subImage.h, image)
+  OptionButton = {
+    x = .5*(width - subImage.w), y = .5*height,
+    w = subImage.w, h = subImage.h, image = image, quad = quad,
+    hidden = true,
+    draw = function (self)
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.draw(self.image, self.quad, 0, 0)
+    end,
+    onClick = function (self)
+      
+    end
+  }
+  table.insert(uis, OptionButton)
+
+  local image = love.graphics.newImage("src/img/Options/start.png")
+  local subImage = {x = 23, y= 54, w=85, h=22}
+  local quad = love.graphics.newQuad(subImage.x, subImage.y, subImage.w, subImage.h, image)
+  StartButton = {
+    x = .5*(width - subImage.w), y = .5*height +3* subImage.h,
+    w = subImage.w, h = subImage.h, image = image, quad = quad,
+    hidden = true,
+    draw = function (self)
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.draw(self.image, self.quad, 0, 0)
+    end,
+    onClick = function (self)
+      HideMenu()
+      game:start()
+    end
+  }
+  table.insert(uis, StartButton)
+
+  ShowMenu = function ()
+    for i, ui in pairs(uis) do
+      ui.hidden = true
+    end
+    mapHidden = true
+    ExitButton.hidden = false
+    OptionButton.hidden = false
+    StartButton.hidden = false
+    game:finish()
   end
-}
-table.insert(uis, nextTurnUI)
+  HideMenu = function ()
+    for i, ui in pairs(uis) do
+      ui.hidden = false
+    end
+    ExitButton.hidden = true
+    OptionButton.hidden = true
+    StartButton.hidden = true
+    mapHidden = false
+  end
+  for i, ui in pairs(uis) do
+    ui.hidden = true
+  end
 end
 
 function love.mousemoved(x, y, dx, dy)
@@ -332,10 +419,6 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.mousepressed(x, y, button, isTouch)
-
-  if currScreen == "acceuil" then
-    --  
-  elseif currScreen == "game" then
     local press = UIMousePress(x, y , button)
     if not press then
       local i, j = screenToGrid(x, y)
@@ -348,23 +431,16 @@ function love.mousepressed(x, y, button, isTouch)
         selectedAction = nil
       end
     end
-  end
 end
 
 function love.mousereleased(x, y, button, isTouch)
-  if currScreen == "acceuil" then
-    --
-  elseif currScreen == "game" then
     UIMouseRelease(x, y, button)
-  
-  end
-
 end
 
 function love.keypressed(key, scancode, isrepeat)
   --https://www.youtube.com/watch?v=79DijItQXMM
   if key == "escape" then
-    love.event.quit()
+    ShowMenu()
     print("...")
   end
   if player and player.actions then
