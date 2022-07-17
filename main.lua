@@ -20,7 +20,8 @@ function projectSetup()
   actionTypes.support.img = love.graphics.newImage("src/img/dice/support.png")
   --
   love.graphics.setBackgroundColor(.3, .3, .3)
-  love.graphics.setNewFont("src/fonts/Quantum.otf", 25)
+  font = love.graphics.newFont("src/fonts/Quantum.otf", 25)
+  love.graphics.setFont(font)
   GMTKScreen = {
     image = love.graphics.newImage("src/img/gmtkLogo.jpg"), timeLeft = 3,
     x=-width/2, y=-height/2,
@@ -51,7 +52,7 @@ function projectSetup()
       nextTurnUI:updateTurns()
       
       fillMap()
-      rollDice()
+
       
       player = applyParams(newLivingEntity(), {i = 3, j=3, w=32, h=32, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
       player.ressources.life = newRessource("life", 10, 10)
@@ -75,7 +76,7 @@ function projectSetup()
       ennemy:addAction(actions.Heal())
       ennemy:initEntity()
       
-      
+      rollDice()
     end,
     finish = function (self)
       for e, entity in pairs(entities) do
@@ -196,11 +197,12 @@ function projectSetup()
     end
     mapHidden = true
     ExitButton.hidden = false
-    OptionButton.hidden = false
+    -- OptionButton.hidden = false
     StartButton.hidden = false
     audioManagerUI.hidden = false
     game:finish()
     audioManager:playMusic(audioManager.musics.mainTheme)
+    mouseover = nil
   end
   HideMenu = function ()
     for i, ui in pairs(uis) do
@@ -353,26 +355,38 @@ function setupUIs()
           draw = function (self)
             love.graphics.setColor(.2, .2, .2)
             love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+            love.graphics.setColor({1, 1, 1, .1})
+            love.graphics.rectangle("line", 5, 5, self.w-10, self.h-10)
             love.graphics.setColor(1, 1, 1)
-            love.graphics.print(action.name, 5, 5)
-            love.graphics.print(action.actionType, 135, 135)
+            love.graphics.printf(action.name, 5, 5, self.w-10)
+            local x, y = self.w-font:getWidth(action.actionType)-10, self.h-font:getHeight()-10
+            love.graphics.print(action.actionType, x, y)
+            local image= actionTypes[action.actionType].img
+            local size = self.w
+            love.graphics.draw(image, 0, 0, 0, size/image:getWidth(), size/image:getHeight())
             if action.actionType ~= game.nextTurns[1] then
               love.graphics.setColor(1, 0, 0, .1)
               love.graphics.rectangle("fill", 0, 0, self.w, self.h)
             end
           end,
-          tooltip = {w = 200, h=200, backgroundColor = {.2, .2, .2}},
+          tooltip = {w = 600, h=300, backgroundColor = {.2, .2, .2}},
           drawTooltip = function (self)
             love.graphics.origin()
-            love.graphics.translate(love.mouse.getX(), love.mouse.getY() - self.tooltip.h)
+            love.graphics.translate(love.mouse.getX()-.5*self.tooltip.w, love.mouse.getY() - self.tooltip.h)
             love.graphics.setColor(self.tooltip.backgroundColor)
             love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
+            love.graphics.setColor({1, 1, 1, .1})
+            love.graphics.rectangle("line", 5, 5, self.tooltip.w-10, self.tooltip.h-10)
             love.graphics.setColor(1, 1, 1)
-            love.graphics.print("name:"..action.name, 10, 10)
-            love.graphics.print("range:"..action.range, 10, 25)
-            love.graphics.print("can be used on oneself:"..(action.usableOnSelf and "Yes" or "No"), 10, 40)
-            love.graphics.print("costs: "..(#action.cost==0 and "none" or ""), 10, 55)
-            y =  55
+            local interLigne = 20
+            local y =10
+            love.graphics.print("name:"..action.name, 10, y)
+            y = y  + interLigne
+            love.graphics.print("range:"..action.range, 10, y)
+            y = y  + interLigne
+            love.graphics.print("can be used on oneself:"..(action.usableOnSelf and "Yes" or "No"), 10, y)
+            y = y  + interLigne
+            love.graphics.print("costs: "..(#action.cost==0 and "none" or ""), 10, y)
             for r, ressource in pairs(action.cost) do
               if player:isAvailable(ressource) then
                 love.graphics.setColor(0, 1, 0)
@@ -380,14 +394,15 @@ function setupUIs()
                 love.graphics.setColor(1, 0, 0)
               end
               love.graphics.print(ressource.quantity.." "..ressource.name, .6*self.tooltip.w, y)
-              y = y + 15
+              y = y + interLigne
             end
-            y = y + 15
+            y = y + interLigne
             love.graphics.setColor(1, 1, 1)
             love.graphics.print("type of action: "..action.actionType, 10, y)
-            y = y + 15
+            y = y + interLigne
             love.graphics.print("shortcut: " .. a .. " key", 10, y)
-            y = y + 15
+            y = y + interLigne
+            y = y + interLigne
             love.graphics.printf(action:getDescription(), 10, y, self.tooltip.w - 20)
           end,
           onClick = function (self)
@@ -409,15 +424,20 @@ function setupUIs()
     draw = function (self)
       love.graphics.setColor(self.backgroundColor)
       love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+      love.graphics.setColor({1, 1, 1, .1})
+      love.graphics.rectangle("line", 5, 5, self.w-10, self.h-10)
       love.graphics.setColor(self.textColor)
       love.graphics.print(self.text, self.textX, .45*self.h)
     end,
-    tooltip = {w = 200, h=200, backgroundColor = {.2, .2, .2}},
+    tooltip = {w = 300, h=200, backgroundColor = {.2, .2, .2}},
     drawTooltip = function (self)
       love.graphics.origin()
+      love.graphics.print("?", love.mouse.getX()+10, love.mouse.getY()+10)
       love.graphics.translate(love.mouse.getX() - self.tooltip.w, love.mouse.getY() - self.tooltip.h)
       love.graphics.setColor(self.tooltip.backgroundColor)
       love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
+      love.graphics.setColor({1, 1, 1, .1})
+      love.graphics.rectangle("line", 5, 5, self.tooltip.w-10, self.tooltip.h-10)
       love.graphics.setColor(1, 1, 1)
       love.graphics.print("shortcut: spacebar", 10, 10)
       love.graphics.printf("End your turn without using your action. Be careful the ennemies will still use theirs if they can!", 10, 50, self.tooltip.w-20)
