@@ -7,38 +7,62 @@ tilesDisplayWidth, tilesDisplayHeight =nil-- number of tiles to show
 zoomX, zoomY =nil
 
 local tilesetImage
-tileSize =16 -- size of tiles in pixels in the tileSet
+tileSize =64 -- size of tiles in pixels in the tileSet
 local tileQuads = {} -- parts of the tileset used for different tiles
 local tilesetSprite
+idMap = 2
 
 function setupMap()
-  mapWidth = 15
-  mapHeight = 15
-  map = {}
-  for x=1,mapWidth do
-    map[x] = {}
-    for y=1,mapHeight do
-      map[x][y] = 0
+
+  handmademap = maps[idMap]
+  if handmademap and #handmademap >0 then
+    mapWidth = #handmademap[1]
+    mapHeight = #handmademap
+    map = {}
+    for x=1, mapWidth do
+      map[x] = {}
+      for y=1,mapHeight do
+        map[x][y] = handmademap[y][x]
+      end
     end
+  else
+    mapWidth = 15
+    mapHeight = 15
+    map = {}
+    for x=1,mapWidth do
+      map[x] = {}
+      for y=1,mapHeight do
+        map[x][y] = 0
+      end
+    end
+  end
+  if idMap == 2 then
+    -- volcano = applyParams(newEntity(), {x=math.random(50)-width/2, h=math.random(-100, 100), w=258, h=258, spriteSet = {path = "src/img/sprites/VolcanoTile.png", width = 258, height = 258, duration = 2.3}})
+    -- animation = newAnimation(love.graphics.newImage("src/img/sprites/VolcanoTile.png"), 258, 258, 2.3, 258, 258)
+    -- volcano:initEntity()
   end
 end
 
 function fillMap()
-  for x=1,mapWidth do
-    map[x] = {}
-    for y=1,mapHeight do
-      map[x][y] = math.random(0, 3)
-    end
-  end
+  -- cx, cy = math.random(mapWidth), math.random(mapHeight)
+  -- size = 3
+  -- for x=cx-size, cx+size do
+  --   for y=cy-size, cy+size do
+  --     if map[x] and map[x][y] then
+  --       map[x][y] = 1
+  --     end
+  --   end
+  -- end
+
   updateTilesetBatch()
 end
 
 function setupMapView()
   mapI = 1
   mapJ = 1
-  zoomX = 2*2
-  zoomY = 1.41*2
-  tileSize = 16
+  zoomX = 1
+  zoomY = 1.4/2
+  tileSize = 64
 
   tilesDisplayWidth = width/(tileSize * zoomX) + 1
   tilesDisplayHeight = height/(tileSize * zoomY) + 1
@@ -67,22 +91,19 @@ function drawMap()
   end
 end
 
-function setupTileset()
-  tilesetImage = love.graphics.newImage( "src/img/sprites/Tiles.png" )
-  tilesetImage:setFilter("nearest", "linear") -- this "linear filter" removes some artifacts if we were to scale the tiles
+function newQuad(i, j)
+  return love.graphics.newQuad(i * tileSize,  j* tileSize, tileSize, tileSize,
+  tilesetImage:getWidth(), tilesetImage:getHeight())
+end
 
-  -- ground
-  tileQuads[3] = love.graphics.newQuad(4 * tileSize, 6 * tileSize+10, tileSize, tileSize,
-  tilesetImage:getWidth(), tilesetImage:getHeight())
-  -- deep ground
-  tileQuads[1] = love.graphics.newQuad(32, 107, tileSize, tileSize,
-  tilesetImage:getWidth(), tilesetImage:getHeight())
-  -- sky
-  tileQuads[2] = love.graphics.newQuad(73, 106, tileSize, tileSize,
-  tilesetImage:getWidth(), tilesetImage:getHeight())
-  -- cloud
-  tileQuads[0] = love.graphics.newQuad(12 * tileSize, 3 * tileSize, tileSize, tileSize,
-  tilesetImage:getWidth(), tilesetImage:getHeight())
+function setupTileset()
+  tilesetImage = love.graphics.newImage( "src/img/sprites/TileFusion.png" )
+  tilesetImage:setFilter("nearest", "linear") -- this "linear filter" removes some artifacts if we were to scale the tiles
+ 
+  for i = 0, tilesetImage:getWidth()/tileSize do
+    tileQuads[i] = newQuad(i, idMap-1)
+  end
+
   
   tilesetBatch = love.graphics.newSpriteBatch(tilesetImage, tilesDisplayWidth * tilesDisplayHeight)
   

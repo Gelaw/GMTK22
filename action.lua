@@ -57,10 +57,26 @@ actions = {
         heal.isTargetValid = function (self, targetCell)
             return self.caster.i == targetCell.i and self.caster.j == targetCell.j
         end
-        heal.activate = function (self)
+        heal.activate = function (self, targetCell)
             self.caster:credit(newRessource("life", self.healAmout))
             if self.caster == player then audioManager:playSound(audioManager.sounds.heal) end
-
+            local tx, ty = gridToScreen(targetCell.i+.5, targetCell.j+.5)
+            table.insert(particuleEffects, {
+                            x=tx, y=ty, color = {1, .2, .2}, nudge = 5, size = 3, timeLeft = 1.5,
+                            pluslygon = {-1,-1,  -1,-3,  1,-3,  1,-1,  3,-1,  3,1,  1,1,  1,3,  -1,3,  -1,1,  -3,1,  -3,-1},
+                            draw = function (self)
+                              love.graphics.translate(self.x, self.y)
+                              love.graphics.scale(2)
+                              love.graphics.setColor(self.color)
+                              local t = love.timer.getTime() % 3600
+                              for i = 1, 4 do
+                                love.graphics.push()
+                                love.graphics.translate(math.cos(10*t+i*39)*5, math.cos(12*t+i*22)*5)
+                                love.graphics.polygon("fill", self.pluslygon)
+                                love.graphics.pop()
+                              end
+                            end
+                          })
             return true
         end
         heal.getDescription = function(self)
@@ -75,9 +91,21 @@ actions = {
         meleeAttack.damage = 2
         meleeAttack.activate = function (self, targetCell)
             local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
+            if entityTargeted ~= player and self.caster ~= player then return false end
             if entityTargeted and entityTargeted.hit then
                 if self.caster == player then audioManager:playSound(audioManager.sounds.attack) end
                 entityTargeted:hit(self.damage)
+                local tx, ty = gridToScreen(targetCell.i+.5, targetCell.j+.5)
+                local cx, cy = gridToScreen(self.caster.i+.5, self.caster.j+.5)
+                local Effect = {x = cx, y = cy, d = math.dist(cx, cy, tx, ty), a = math.angle(cx, cy, tx, ty),timeLeft = .3,
+                draw = function (self)
+                    love.graphics.setColor(1, 1, 1)
+                    love.graphics.translate(self.x, self.y)
+                    local angle = self.a + self.timeLeft*math.pi
+                    love.graphics.line(0, 0, self.d*math.cos(angle), self.d*math.sin(angle))
+                end}
+
+                table.insert(particuleEffects, Effect)
                 return true
             end
             return false
@@ -128,9 +156,20 @@ actions = {
         magicMissile.cost = {newRessource("mana", 1)}
         magicMissile.activate = function (self, targetCell)
             local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
+            if entityTargeted ~= player and self.caster ~= player then return false end
             if entityTargeted and entityTargeted.hit then
                 if self.caster == player then audioManager:playSound(audioManager.sounds.magic) end
                 entityTargeted:hit(self.damage)
+                local tx, ty = gridToScreen(targetCell.i+.5, targetCell.j+.5)
+                local cx, cy = gridToScreen(self.caster.i+.5, self.caster.j+.5)
+                local Effect = {x = cx, y = cy, tx = tx, ty =ty, timeLeft = .5,
+                draw = function (self)
+                    love.graphics.setColor(.5, 0, 1, .3)
+                    love.graphics.translate(self.x + (1-self.timeLeft/.5)*(self.tx - self.x), self.y + (1-self.timeLeft/.5)*(self.ty - self.y))
+                    love.graphics.circle("fill", 0, 0, 10)
+                end}
+
+                table.insert(particuleEffects, Effect)
                 return true
             end
             return false
