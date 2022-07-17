@@ -41,15 +41,25 @@ function projectSetup()
     end
   }
   table.insert(particuleEffects, GMTKScreen)
-  
+  menuBackground = love.graphics.newImage("src/img/Menu.png")
+  addDrawFunction(function ()
+    if mapHidden then
+      love.graphics.setColor(1,1,1)
+      love.graphics.draw(menuBackground, -width*.5, -height*.5, 0, width/menuBackground:getWidth(), height/menuBackground:getHeight())
+    end
+  end, 1)
+
   game = {
     gameState = "unlaunched",
     nTurn = 1,
+    level = 0,
     maxPrerolledTurns = 5,
     nextTurns = {},
     start = function(self)
       self.nTurn = 1
+      victory.hidden = true
       self.nextTurns = {"move", "move", "move", "move"}
+      self.level = self.level + 1
       nextTurnUI:updateTurns()
       
       setupMap()
@@ -64,19 +74,27 @@ function projectSetup()
         player:addAction(actions.MagicMissile())
         player:initEntity()
       else
+        for e, entity in pairs(entities) do
+          entity.terminated = true
+        end
+        player.terminated = false
+        upgradePlayer()
         player.i, player.j = 3, 3
+        player.ressources.life.quantity = player.ressources.life.max
+        player.ressources.mana.quantity = player.ressources.mana.max
         player:snapToGrid()
       end
 
       
       
-      for i = 1, 5 do
+      for i = 1, 1 do
         spawn("basic")
       end
       
       rollDice()
     end,
     finish = function (self)
+      self.level = 0
       for e, entity in pairs(entities) do
         entity.terminated = true
       end
@@ -85,29 +103,7 @@ function projectSetup()
       if #self.nextTurns <1 then return end
       self:playIAs()
       if player:isDead() then
-        defeat = {
-          x = 0, y = 0,
-          draw = function ()
-            love.graphics.push()
-            love.graphics.origin()
-            love.graphics.translate(.5*width, .5*height)
-            victoire = victoire or {s=30}
-            love.graphics.setColor(1, 0, 0)
-            love.graphics.polygon("fill",
-            victoire.s,  victoire.s,
-            -victoire.s,  victoire.s,
-            -1.5*victoire.s, 0,
-            -victoire.s, -victoire.s,
-            victoire.s, -victoire.s,
-            1.5*victoire.s, 0)
-            victoire.s = math.min(victoire.s + 1, 120)
-            love.graphics.setColor(.2, .2, .2)
-            local text = "Defeat"
-            love.graphics.print(text, -.5*love.graphics.getFont():getWidth(text),-.5*love.graphics.getFont():getHeight())
-            love.graphics.pop()
-          end
-        }
-        table.insert(uis, defeat)
+
         
       end
       table.remove(self.nextTurns, 1)
@@ -157,30 +153,7 @@ function projectSetup()
         end
       end
       if c == 0 then 
-        victory = {
-          x = 0, y = 0,
-          draw = function ()
-            love.graphics.push()
-            love.graphics.origin()
-            love.graphics.translate(.5*width, .5*height)
-            victoire = victoire or {s=30}
-            love.graphics.setColor(.73, .5, .4)
-            love.graphics.polygon("fill",
-            victoire.s,  victoire.s,
-            -victoire.s,  victoire.s,
-            -1.5*victoire.s, 0,
-            -victoire.s, -victoire.s,
-            victoire.s, -victoire.s,
-            1.5*victoire.s, 0)
-            victoire.s = math.min(victoire.s + 1, 120)
-            love.graphics.setColor(.2, .8, .4)
-            local text = "Victory"
-            love.graphics.print(text, -.5*love.graphics.getFont():getWidth(text),-.5*love.graphics.getFont():getHeight())
-            love.graphics.pop()
-          end
-        }
-        level = level +1
-        table.insert(uis, victory)
+        victory.hidden = false
       end
     end
   }
@@ -216,6 +189,8 @@ function projectSetup()
     ExitButton.hidden = true
     OptionButton.hidden = true
     StartButton.hidden = true
+    victory.hidden = true
+    defeat.hidden = true
     mapHidden = false
   end
   
@@ -326,6 +301,56 @@ function rollDice()
 end
 
 function setupUIs()
+  victory = {
+    x = .5*width-120, y = .5*height-120, w=  240, h= 240,hidden = true,
+    draw = function ()
+      love.graphics.push()
+      love.graphics.origin()
+      love.graphics.translate(.5*width, .5*height)
+      love.graphics.setColor(.73, .5, .4)
+      love.graphics.polygon("fill",
+      120,  120,
+      -120,  120,
+      -1.5*120, 0,
+      -120, -120,
+      120, -120,
+      1.5*120, 0)
+      love.graphics.setColor(.2, .8, .4)
+      local text = "Victory"
+      love.graphics.print(text.."\nlevel "..game.level, -.5*love.graphics.getFont():getWidth(text),-.5*love.graphics.getFont():getHeight())
+      love.graphics.pop()
+    end,
+    onClick = function()
+      game:start()
+    end
+  }
+  table.insert(uis, victory)
+  defeat = {
+    x = .5*width-120, y = .5*height-120, w=  240, h= 240,hidden = true,
+    draw = function ()
+      love.graphics.push()
+      love.graphics.origin()
+      love.graphics.translate(.5*width, .5*height)
+      love.graphics.setColor(1, 0, 0)
+      love.graphics.polygon("fill",
+      120,  120,
+      -120,  120,
+      -1.5*120, 0,
+      -120, -120,
+      120, -120,
+      1.5*120, 0)
+      love.graphics.setColor(.2, .2, .2)
+      local text = "Defeat"
+      love.graphics.print(text, -.5*love.graphics.getFont():getWidth(text),-.5*love.graphics.getFont():getHeight())
+      love.graphics.pop()
+    end,
+    onClick =function()
+      
+      ShowMenu()
+    end
+  }
+  table.insert(uis, defeat)
+
   -- Dedicace Sobroniel pour le nom de variable
   menuRadial = {
     x = 0, y = height*.8,w=width, h = .2*height,
@@ -355,6 +380,7 @@ function setupUIs()
           love.graphics.line(sx+3, y-5+sy, sx-3, y + 5+sy)
           y = y + 25
         end
+        love.graphics.printf(upgradeText, 5, y, self.w-10)
       end
     end
   }
@@ -537,12 +563,12 @@ function setupUIs()
   local subImage = {x = 23, y= 54, w=85, h=22}
   local quad = love.graphics.newQuad(subImage.x, subImage.y, subImage.w, subImage.h, image)
   ExitButton = {
-    x = .5*(width - subImage.w), y = .5*height -3* subImage.h,
-    w = subImage.w, h = subImage.h, image = image, quad = quad,
+    x = (width - 5*subImage.w), y = 0,
+    w = 5*subImage.w, h = 5*subImage.h, image = image, quad = quad,
     hidden = true,
     draw = function (self)
       love.graphics.setColor(1, 1, 1)
-      love.graphics.draw(self.image, self.quad, 0, 0)
+      love.graphics.draw(self.image, self.quad, 0, 0, 0, self.w/subImage.w, self.h/subImage.h)
     end,
     onClick = function (self)
       love.event.quit()
@@ -571,12 +597,12 @@ function setupUIs()
   local subImage = {x = 23, y= 54, w=85, h=22}
   local quad = love.graphics.newQuad(subImage.x, subImage.y, subImage.w, subImage.h, image)
   StartButton = {
-    x = .5*(width - subImage.w), y = .5*height +3* subImage.h,
-    w = subImage.w, h = subImage.h, image = image, quad = quad,
+    x = .8*(width - subImage.w), y = .8*height +3* subImage.h,
+    w = 5*subImage.w, h = 5*subImage.h, image = image, quad = quad,
     hidden = true,
     draw = function (self)
       love.graphics.setColor(1, 1, 1)
-      love.graphics.draw(self.image, self.quad, 0, 0)
+      love.graphics.draw(self.image, self.quad, 0, 0, 0, self.w/subImage.w, self.h/subImage.h)
     end,
     onClick = function (self)
       HideMenu()
@@ -704,12 +730,14 @@ function love.mousepressed(x, y, button, isTouch)
 end
 
 function love.mousereleased(x, y, button, isTouch)
-  if defeat then ShowMenu() end
   UIMouseRelease(x, y, button)
 end
 
 function love.keypressed(key, scancode, isrepeat)
-  if defeat then ShowMenu() end
+  if not victory.hidden then 
+    game:start()
+  end
+  if not defeat.hidden then ShowMenu() end
   --https://www.youtube.com/watch?v=79DijItQXMM
   if key == "escape" then
     ShowMenu()
@@ -846,3 +874,46 @@ audioManager = {
     end
   end
 }
+
+upgradeText = ""
+
+function upgradePlayer()
+  if math.random() <.01 then
+    player.actions[2].range = player.actions[2].range + 1 --range melee attack
+    upgradeText = "Melee attack gained 1 range!\n" ..upgradeText
+    return
+  end
+  if math.random() <.01 then
+    print(player.actions[3].name)
+    player.actions[3].healAmout = player.actions[3].healAmout + 1 -- heal healAmout 
+    upgradeText = "Heal recovers 1 more life!\n" ..upgradeText
+    return
+  end
+  if math.random() <.05 then
+    player.actions[2].damage = player.actions[2].damage+1 -- melee attack damage
+    upgradeText = "Melee attack gained 1 damage!\n" ..upgradeText
+    return
+  end
+  if math.random() < .05 then
+    player.actions[4].damage = player.actions[4].damage+1 -- magic missile damage
+    upgradeText = "Magic Missile gained 1 damage!\n" ..upgradeText
+    return
+  end
+  if math.random() < .05 then
+    player.actions[4].range = player.actions[4].range + 1 -- magic missile range
+    upgradeText = "Magic Missile gained 1 range!\n" ..upgradeText
+    return
+  end
+  if math.random() < .05 then
+    player.actions[1].range = player.actions[1].range + 1 -- move damage
+    upgradeText = "Move gained 1 range!\n" ..upgradeText
+    return
+  end
+  if math.random()<.7 then
+    player.ressources.life.max = player.ressources.life.max +1 -- maxLife
+    upgradeText = "You gained 1 life point!\n" ..upgradeText
+  else
+    player.ressources.mana.max = player.ressources.mana.max +1 -- maxMana
+    upgradeText = "You gained 1 mana point!\n" ..upgradeText
+  end
+end
