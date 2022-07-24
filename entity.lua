@@ -52,7 +52,7 @@ function newEntity()
     
     entity.loadAnimation = function (self, spriteSet)
         if self.spriteSet then
-            self.animation = newAnimation(love.graphics.newImage(self.spriteSet.path or spriteSet.path or spriteSet),
+            self.animation = newAnimation(self.image or love.graphics.newImage(self.spriteSet.path or spriteSet.path or spriteSet),
             self.spriteSet.width or spriteSet.width or 16, self.spriteSet.height or spriteSet.height or 16, 1, 32, 32)
         end
         if self.animation then
