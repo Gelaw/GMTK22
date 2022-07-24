@@ -439,7 +439,7 @@ audioManager = {
     mainTheme = love.audio.newSource( 'src/snd/test3.mp3', 'static' ),
     prairieTheme = love.audio.newSource( 'src/snd/prairie.mp3', 'static' )
   },
-  musicVolume = .05, mute = false,
+  musicVolume = .05, mute = true,
   
   toggleMute = function(self, forced)
     self.mute = forced or not self.mute
@@ -464,6 +464,7 @@ audioManager = {
     end
     self.music = music
     self.music:play()
+    if self.mute then self.music:pause() end
     self.music:setVolume(self.musicVolume)
     self.music:setLooping(true)
   end,
@@ -478,7 +479,7 @@ audioManager = {
     wrong = love.audio.newSource( 'src/snd/soundEffect/snd_wrong.mp3', 'static' )
   },
 
-  SEVolume = 1, muteSE = false,
+  SEVolume = 1, muteSE = true,
   playingSounds = {},
   
   toggleMuteSE = function(self, forced)

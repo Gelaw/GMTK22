@@ -302,7 +302,7 @@ function setupUIs()
       
     end
   }
-  table.insert(MenuScreen.children, OptionButton)
+  -- table.insert(MenuScreen.children, OptionButton)
   
   local image = love.graphics.newImage("src/img/Options/start.png")
   local subImage = {x = 23, y= 54, w=85, h=22}
