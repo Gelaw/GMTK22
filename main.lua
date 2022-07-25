@@ -23,7 +23,20 @@ function projectSetup()
   actionTypes.support.img = love.graphics.newImage("src/img/dice/support.png")
   gmtkImage = love.graphics.newImage("src/img/gmtkLogo.jpg")
   ssLogo = love.graphics.newImage("src/img/SacraScriptura.png")
+  menuBackground = love.graphics.newImage("src/img/Menu.png")
   
+  --load music and sounds
+  audioManager:loadMusic("mainTheme", "src/snd/test3.mp3")
+  audioManager:loadMusic("prairieTheme", "src/snd/prairie.mp3")
+
+  audioManager:loadSoundEffect("click",       "src/snd/soundEffect/snd_btnClick.mp3")
+  audioManager:loadSoundEffect("attack",      "src/snd/soundEffect/snd_heroAttack.mp3")
+  audioManager:loadSoundEffect("heal",        "src/snd/soundEffect/snd_heroHeal.mp3")
+  audioManager:loadSoundEffect("magic",       "src/snd/soundEffect/snd_heroMagic.mp3")
+  audioManager:loadSoundEffect("walk",        "src/snd/soundEffect/snd_heroWalk.mp3")
+  audioManager:loadSoundEffect("mouseclick",  "src/snd/soundEffect/snd_mouseClick.mp3")
+  audioManager:loadSoundEffect("wrong",       "src/snd/soundEffect/snd_wrong.mp3")
+
   --font
   love.graphics.setBackgroundColor(.3, .3, .3)
   font = love.graphics.newFont("src/fonts/Quantum.otf", 25)
@@ -49,7 +62,7 @@ function projectSetup()
   }
   table.insert(particuleEffects, GMTKScreen)
 
-  menuBackground = love.graphics.newImage("src/img/Menu.png")
+ 
   addDrawFunction(function ()
     if mapHidden then
       love.graphics.setColor(1,1,1)
@@ -81,6 +94,7 @@ function projectSetup()
         player:addAction(actions.Heal())
         player:addAction(actions.MagicMissile())
         player:initEntity()
+        setupUpgrades()
       else
         for e, entity in pairs(entities) do
           entity.terminated = true
@@ -435,12 +449,13 @@ function tests()
 end
 
 audioManager = {
-  musics = {
-    mainTheme = love.audio.newSource( 'src/snd/test3.mp3', 'static' ),
-    prairieTheme = love.audio.newSource( 'src/snd/prairie.mp3', 'static' )
-  },
-  musicVolume = .05, mute = true,
+  musics = {},
+  musicVolume = .05, mute = false,
   
+  loadMusic = function(self, name, path)
+    self.musics[name] = love.audio.newSource( path, 'static' )
+  end,
+
   toggleMute = function(self, forced)
     self.mute = forced or not self.mute
     if self.mute then
@@ -469,19 +484,15 @@ audioManager = {
     self.music:setLooping(true)
   end,
   
-  sounds = {
-    click = love.audio.newSource( 'src/snd/soundEffect/snd_btnClick.mp3', 'static' ),
-    attack = love.audio.newSource( 'src/snd/soundEffect/snd_heroAttack.mp3', 'static' ),
-    heal = love.audio.newSource( 'src/snd/soundEffect/snd_heroHeal.mp3', 'static' ),
-    magic = love.audio.newSource( 'src/snd/soundEffect/snd_heroMagic.mp3', 'static' ),
-    walk = love.audio.newSource( 'src/snd/soundEffect/snd_heroWalk.mp3', 'static' ),
-    mouseclick = love.audio.newSource( 'src/snd/soundEffect/snd_mouseClick.mp3', 'static' ),
-    wrong = love.audio.newSource( 'src/snd/soundEffect/snd_wrong.mp3', 'static' )
-  },
+  sounds = { },
 
-  SEVolume = 1, muteSE = true,
+  SEVolume = 1, muteSE = false,
   playingSounds = {},
   
+  loadSoundEffect = function(self, name, path)
+    self.sounds[name] = love.audio.newSource( path, 'static' )
+  end,
+
   toggleMuteSE = function(self, forced)
     self.muteSE = forced or not self.muteSE
     for s, sound in pairs(self.playingSounds) do
@@ -504,6 +515,7 @@ audioManager = {
     table.insert(self.playingSounds, clone)
     clone:play()
     self:cleanPlayingSounds()
+    return clone
   end,
   
   cleanPlayingSounds = function (self)
@@ -515,16 +527,44 @@ audioManager = {
   end
 }
 
-upgradeText = ""
+
+function setupUpgrades()
+  upgradeText = ""
+  upgrades = {
+    {player.actions[2], "range", 1},
+    {player.actions[3], "healAmout", 1},
+    {player.actions[2], "damage", 5},
+    {player.actions[4], "damage", 5},
+    {player.actions[4], "range", 5},
+    {player.actions[1], "range", 5},
+    {player.ressources.life, "max", 59},
+    {player.ressources.mana, "max", 19}
+  }
+  upgradeWeightSum = 0
+  for u, upgrade in pairs(upgrades) do
+    upgradeWeightSum = upgradeWeightSum + upgrade[3]
+  end
+end
 
 function upgradePlayer()
+  local roll = math.random(upgradeWeightSum)
+  for u, upgrade in pairs(upgrades) do
+    roll = roll - upgrade[3]
+    if roll < 0 then
+      upgradeText = upgrade[1].name .." gained 1 " .. upgrade[2] .."\n" .. upgradeText
+      upgrade[1][upgrade[2]] = upgrade[1][upgrade[2]] + 1
+      break
+    end
+  end
+end
+
+function upgradePlayerold()
   if math.random() <.01 then
     player.actions[2].range = player.actions[2].range + 1 --range melee attack
     upgradeText = "Melee attack gained 1 range!\n" ..upgradeText
     return
   end
   if math.random() <.01 then
-    print(player.actions[3].name)
     player.actions[3].healAmout = player.actions[3].healAmout + 1 -- heal healAmout 
     upgradeText = "Heal recovers 1 more life!\n" ..upgradeText
     return
