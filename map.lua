@@ -114,8 +114,9 @@ function updateTilesetBatch()
   tilesetBatch:clear()
   for i=0, tilesDisplayWidth-1 do
     for j=0, tilesDisplayHeight-1 do
-      if map[i+math.floor(mapI)] and map[i+math.floor(mapI)][j+math.floor(mapJ)] then
-        tilesetBatch:add(tileQuads[map[i+math.floor(mapI)][j+math.floor(mapJ)]], i*tileSize, j*tileSize)
+      local mi, mj = i+math.floor(mapI), j+math.floor(mapJ)
+      if map[mi] and map[mi][mj] and tileQuads[map[mi][mj]] then
+        tilesetBatch:add(tileQuads[map[mi][mj]], i*tileSize, j*tileSize)
       end
     end
   end

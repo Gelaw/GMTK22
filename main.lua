@@ -6,6 +6,12 @@ require "action"
 require "mapFile"
 
 function projectSetup()
+  
+  --font
+  love.graphics.setBackgroundColor(.3, .3, .3)
+  font = love.graphics.newFont("src/fonts/Quantum.otf", 25)
+  love.graphics.setFont(font)
+
   --Load images
   diceImg = love.graphics.newImage("src/img/dice/dice.png")
   fuzzyDicesImages = {
@@ -18,9 +24,9 @@ function projectSetup()
   oldHeroImage = love.graphics.newImage("src/img/sprites/oldHero.png")
   knightImage = love.graphics.newImage("src/img/sprites/knight.png")
   mageImage = love.graphics.newImage("src/img/sprites/mage.png")
-  actionTypes.attack.img = love.graphics.newImage("src/img/dice/attack.png")
-  actionTypes.move.img = love.graphics.newImage("/src/img/dice/move.png")
-  actionTypes.support.img = love.graphics.newImage("src/img/dice/support.png")
+
+  setupActionTypesImages()
+
   gmtkImage = love.graphics.newImage("src/img/gmtkLogo.jpg")
   ssLogo = love.graphics.newImage("src/img/SacraScriptura.png")
   menuBackground = love.graphics.newImage("src/img/Menu.png")
@@ -36,11 +42,6 @@ function projectSetup()
   audioManager:loadSoundEffect("walk",        "src/snd/soundEffect/snd_heroWalk.mp3")
   audioManager:loadSoundEffect("mouseclick",  "src/snd/soundEffect/snd_mouseClick.mp3")
   audioManager:loadSoundEffect("wrong",       "src/snd/soundEffect/snd_wrong.mp3")
-
-  --font
-  love.graphics.setBackgroundColor(.3, .3, .3)
-  font = love.graphics.newFont("src/fonts/Quantum.otf", 25)
-  love.graphics.setFont(font)
 
   GMTKScreen = {
     image = gmtkImage,
@@ -89,6 +90,7 @@ function projectSetup()
         player = applyParams(newLivingEntity(), {image = knightImage, i = 3, j=3, w=32, h=32, spriteSet = {width = 20, height = 20}})
         player.ressources.life = newRessource("life", 10, 10)
         player.ressources.mana = newRessource("mana", 3, 3)
+        player:equip({equipmentType="armor", stats= {armor = 1}})
         player:addAction(actions.Walk({range=2}))
         player:addAction(actions.MeleeAttack())
         player:addAction(actions.Heal())
@@ -391,10 +393,12 @@ function love.keypressed(key, scancode, isrepeat)
   if love.keyboard.isDown("lctrl") and love.keyboard.isDown("rctrl") then
    victory.hidden = false
   end
-
-  --https://www.youtube.com/watch?v=79DijItQXMM
   if key == "escape" then
-    ShowMenu()
+    if MenuScreen.hidden then
+      ShowMenu()
+    else
+      love.event.quit()
+    end
   end
   if player and player.actions then
     if player.actions[tonumber(key)] and player.actions[tonumber(key)].actionType == game.nextTurns[1] then

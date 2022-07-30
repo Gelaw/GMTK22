@@ -6,7 +6,8 @@ function newEntity()
     entity.snappingSpeed = 30 * tileSize
     entity.w, entity.h = tileSize, tileSize
     entity.blockPath = true         --does entity prevent from walking on his cell
-
+    entity.stats = {}
+    
     entity.updates = {
         function (self, dt)
             if not self.i or not self.j then return end
@@ -65,28 +66,29 @@ function newEntity()
                 self.animation:draw()
             end
             table.insert(self.updates,
-                function (self, dt)
-                    self.animation:update(dt)
-                end
-            )
-        end
+            function (self, dt)
+                self.animation:update(dt)
+            end
+        )
     end
-    
-    entity.initEntity = function (self)
-        self:loadAnimation()
-        if self.i and self.j then
-            self:snapToGrid()
-        end
-    end
+end
 
-    table.insert(entities, entity)
-    return entity
+entity.initEntity = function (self)
+    self:loadAnimation()
+    if self.i and self.j then
+        self:snapToGrid()
+    end
+end
+
+table.insert(entities, entity)
+return entity
 end
 
 function newLivingEntity(entity)
     local entity = entity or newEntity()
-
+    
     entity.ressources = {}
+    
     entity.isAvailable = function (self, ressource)
         local name = ressource.name
         if self.ressources[name] then
@@ -123,21 +125,41 @@ function newLivingEntity(entity)
         end
     end
     entity.onHit = function (self, damage)
-        assert(type(damage) == "number", "onHit function takes damage value!")
-        if self.ressources.life then
-            self:deduct(newRessource("life", damage))
+        assert(type(damage)=="number", "onHit function takes damage value!")
+        local absoluteDamage = damage - (self.stats.armor or 0) - (self.equipmentStats.armor or 0)
+        if self.ressources.life and absoluteDamage > 0 then
+            self:deduct(newRessource("life", absoluteDamage))
         end
     end
     entity.onDeath = function (self) end
-
+    
     entity.actions = {}
     entity.addAction = function (self, action)
         action.caster = self
         table.insert(self.actions, action)
     end
-
+    
+    entity.equipmentStats = {}
+    entity.equipment = {mainHand = nil, offhand = nil, armor = nil}
+    entity.equipmentStats = {}
+    
+    entity.equip = function (self, item)
+        self.equipment[item.equipmentType] = item
+        self:recalculateEquipmentStats()
+    end
+    
+    entity.recalculateEquipmentStats = function (self)
+        self.equipmentStats = {}
+        for i, item in pairs(self.equipment) do
+            for s, stat in pairs(item.stats) do
+                self.equipmentStats[s] = (self.equipmentStats[s] or 0) + stat
+            end
+        end
+    end
     return entity
 end
+
+ressourceTypes = {life = {name = "life"}, mana = {name = "mana"}} 
 
 function newRessource(ressourceType, quantity, max)
     local ressource
@@ -149,17 +171,16 @@ function newRessource(ressourceType, quantity, max)
     return ressource
 end
 
-ressourceTypes = {life = {name = "life"}, mana = {name = "mana"}}
 
 function testLivingEntityRessource()
     local livingEntity = applyParams(newLivingEntity(), {i = 5, j=5, color={0, 1, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
     livingEntity:initEntity()
-
+    
     livingEntity.ressources.life = newRessource("life", 10, 10)
     livingEntity:hit(2)
     assert(livingEntity.ressources.life.quantity == 8, "livingEntity:hit(damage) failed!")
     print("livingEntity:hit(damage) Ok")
-
+    
     livingEntity:credit(newRessource("life", 3))
     assert(livingEntity.ressources.life.quantity == 10, "livingEntity:credit() action failed! expected livingEntity life 10, found "..livingEntity.ressources.life.quantity)
     print("livingEntity:credit() Ok")

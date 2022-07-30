@@ -1,9 +1,23 @@
-actionTypesKeys = {"attack", "move", "support"}
+actionTypesKeys = {"attack", "move", "magic", "miscellaneous"}
 actionTypes = {
     attack = {name = "attack", img = nil},
     move = {name = "move", img = nil},
-    support = {name = "support", img = nil}
+    magic = {name = "magic", img = nil},
+    miscellaneous = {name = "miscellaneous", img = nil}
 }
+
+function setupActionTypesImages()
+    actionTypes.attack.img = love.graphics.newImage("src/img/dice/attack.png")
+    actionTypes.move.img = love.graphics.newImage("/src/img/dice/move.png")
+    actionTypes.magic.img = love.graphics.newImage("src/img/dice/support.png")
+    local canvas = love.graphics.newCanvas(254, 254)
+    love.graphics.setCanvas(canvas)
+    love.graphics.scale(2)
+    love.graphics.print("?", .5*.5*254-.5*font:getWidth("?"), .5*.5*254-.5*font:getHeight())
+    love.graphics.setCanvas()
+    actionTypes.miscellaneous.img = love.graphics.newImage(canvas:newImageData())
+  
+end
 
 function newAction()
     local action = {
@@ -32,15 +46,13 @@ function newAction()
             return true
         end,
         try = function (self, targetCell)
-            if self:isCostAvailable() and self:isTargetValid(targetCell) then
-                if self:activate(targetCell) then
-                    for r, ressource in pairs(self.cost) do
-                        self.caster:deduct(ressource)
-                    end
-                    return true
-                end
+            if not self:isCostAvailable() then return false, self.name.."'s cost isn't available" end
+            if not self:isTargetValid(targetCell) then return false, "target isn't valid for "..self.name end
+            if not self:activate(targetCell) then return false, self.name .. " activation failed" end
+            for r, ressource in pairs(self.cost) do
+                self.caster:deduct(ressource)
             end
-            return false
+            return true
         end
     }
     return action
@@ -49,7 +61,7 @@ end
 actions = {
     Heal = function (params)
         local heal = newAction()
-        heal.actionType = "support"
+        heal.actionType = "magic"
         heal.name = "HEAL"
         heal.usableOnSelf = true
         heal.range = 0
@@ -150,7 +162,7 @@ actions = {
     MagicMissile = function (params)
         local magicMissile = newAction()
         magicMissile.name = "MAGIC MISSILE"
-        magicMissile.actionType = "attack"
+        magicMissile.actionType = "magic"
         magicMissile.damage = 1
         magicMissile.range = 4
         magicMissile.cost = {newRessource("mana", 1)}
