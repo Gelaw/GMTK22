@@ -6,7 +6,7 @@ function newEntity()
     entity.snappingSpeed = 30 * tileSize
     entity.w, entity.h = tileSize, tileSize
     entity.blockPath = true         --does entity prevent from walking on his cell
-    entity.stats = {}
+    entity.stats = {meleeAttack = 1}
     
     entity.updates = {
         function (self, dt)
@@ -68,20 +68,19 @@ function newEntity()
             table.insert(self.updates,
             function (self, dt)
                 self.animation:update(dt)
-            end
-        )
+            end)
+        end
     end
-end
-
-entity.initEntity = function (self)
-    self:loadAnimation()
-    if self.i and self.j then
-        self:snapToGrid()
+    
+    entity.initEntity = function (self)
+        self:loadAnimation()
+        if self.i and self.j then
+            self:snapToGrid()
+        end
     end
-end
-
-table.insert(entities, entity)
-return entity
+    
+    table.insert(entities, entity)
+    return entity
 end
 
 function newLivingEntity(entity)
@@ -125,7 +124,6 @@ function newLivingEntity(entity)
         end
     end
     entity.onHit = function (self, damage)
-        assert(type(damage)=="number", "onHit function takes damage value!")
         local absoluteDamage = damage - (self.stats.armor or 0) - (self.equipmentStats.armor or 0)
         if self.ressources.life and absoluteDamage > 0 then
             self:deduct(newRessource("life", absoluteDamage))

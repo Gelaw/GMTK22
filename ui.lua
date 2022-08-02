@@ -322,8 +322,78 @@ function setupUIs()
   }
   table.insert(MenuScreen.children, StartButton)
   
-  
-  
+  equipmentUI = {
+    x = width - 300, y = 0,
+    w = 300, h = height/2,
+    open = true,
+    backgroundColor = {.1, .1, .1},
+    children = {},
+    draw = function (self)
+      love.graphics.setColor(self.backgroundColor)
+      love.graphics.rectangle("fill", -30, 0, 30, 30)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+      love.graphics.setColor(1, 1, 1)
+      love.graphics.rectangle("line", -30, 0, 30, 30)
+      love.graphics.rectangle("line", 0, 0, self.w, self.h)
+    end
+  }
+  table.insert(GameScreen.children, equipmentUI)
+
+  mainHandSlot = {
+    x = 20, y = 100, w = 50, h = 50,
+    backgroundColor = {1, 1, 1, .1},
+    draw = function (self)
+      love.graphics.setColor(self.backgroundColor)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+      if player.equipment.mainhand then
+        player.equipment.mainhand:drawSprite()
+      end
+    end,
+    tooltip = {w = 600, h=200, backgroundColor = {.2, .2, .2}, textColor = {1, 1, 1}},
+    drawTooltip = function (self)
+      if player.equipment.mainhand then
+        love.graphics.origin()
+        love.graphics.print("?", love.mouse.getX()+10, love.mouse.getY()+10)
+        love.graphics.translate(love.mouse.getX() - self.tooltip.w, love.mouse.getY())
+        love.graphics.setColor(self.tooltip.backgroundColor)
+        love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
+        love.graphics.setColor({1, 1, 1, .1})
+        love.graphics.rectangle("line", 5, 5, self.tooltip.w-10, self.tooltip.h-10)
+        love.graphics.setColor({1, 1, 1})
+        player.equipment.mainhand:drawTooltip(10, 10, self.tooltip.w-10, self.tooltip.h-10)
+      end
+    end,
+  }
+  table.insert(equipmentUI.children, mainHandSlot)
+
+  armorSlot = {
+    x = 80, y = 80, w = 50, h = 50,
+    backgroundColor = {1, 1, 1, .1},
+    draw = function (self)
+      love.graphics.setColor(self.backgroundColor)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+      if player.equipment.armor then
+        player.equipment.armor:drawSprite()
+      end
+    end,
+    tooltip = {w = 600, h=200, backgroundColor = {.2, .2, .2}, textColor = {1, 1, 1}},
+    drawTooltip = function (self)
+      if player.equipment.armor then
+        love.graphics.origin()
+        love.graphics.print("?", love.mouse.getX()+10, love.mouse.getY()+10)
+        love.graphics.translate(love.mouse.getX() - self.tooltip.w, love.mouse.getY())
+        love.graphics.setColor(self.tooltip.backgroundColor)
+        love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
+        love.graphics.setColor({1, 1, 1, .1})
+        love.graphics.rectangle("line", 5, 5, self.tooltip.w-10, self.tooltip.h-10)
+        love.graphics.setColor({1, 1, 1})
+        player.equipment.armor:drawTooltip(10, 10, self.tooltip.w-10, self.tooltip.h-10)
+      end
+    end,
+  }
+  table.insert(equipmentUI.children, armorSlot)
+
+
   audioManagerUI = {
     x = 0, y = 0, w = 100, h= 350,
     backgroundColor = {.2, .2, .2},
@@ -414,8 +484,7 @@ function setupUIs()
       love.graphics.rectangle("fill", 0, 0, self.w, self.h)
     end
   }
-  table.insert(GameScreen.children, audioManagerUI)
-  table.insert(MenuScreen.children, audioManagerUI)
+  table.insert(uis, audioManagerUI)
 
 
 end
@@ -466,6 +535,18 @@ end
   --   draw = function (self)
   --     love.graphics.setColor(0, 1, 0)
   --     love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-  --   end
+  --   end,
+  -- tooltip = {w = 300, h=200, backgroundColor = {.2, .2, .2}},
+  -- drawTooltip = function (self)
+  --   love.graphics.origin()
+  --   love.graphics.print("?", love.mouse.getX()+10, love.mouse.getY()+10)
+  --   love.graphics.translate(love.mouse.getX() - self.tooltip.w, love.mouse.getY() - self.tooltip.h)
+  --   love.graphics.setColor(self.tooltip.backgroundColor)
+  --   love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
+  --   love.graphics.setColor({1, 1, 1, .1})
+  --   love.graphics.rectangle("line", 5, 5, self.tooltip.w-10, self.tooltip.h-10)
+  --   love.graphics.setColor(1, 1, 1)
+  --   love.graphics.print("this is a tooltip", 10, 10)
+  -- end
   -- }
   -- table.insert(uis, testUI)

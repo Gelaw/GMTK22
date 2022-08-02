@@ -4,6 +4,7 @@ require "map"
 require "entity"
 require "action"
 require "mapFile"
+require "item"
 
 function projectSetup()
   
@@ -21,6 +22,28 @@ function projectSetup()
     love.graphics.newImage("src/img/dice_frame/deP4.png"),
     love.graphics.newImage("src/img/dice_frame/deP5.png")
   }
+  
+  dungeonSprites = love.graphics.newImage("src/img/sprites/ProjectUtumno_full.png")
+  spriteSize = 32
+
+  todoQuad = love.graphics.newQuad(37 * spriteSize,  50* spriteSize, spriteSize, spriteSize,
+  dungeonSprites:getWidth(), dungeonSprites:getHeight())
+
+  itemsQuads = {
+    sword = love.graphics.newQuad(2 * spriteSize,  49* spriteSize, spriteSize, spriteSize,
+    dungeonSprites:getWidth(), dungeonSprites:getHeight()),
+    armor = love.graphics.newQuad(15 * spriteSize,  38* spriteSize, spriteSize, spriteSize,
+    dungeonSprites:getWidth(), dungeonSprites:getHeight())
+  }
+  itemTest = newItem({name = "sword", quad = itemsQuads.sword, stats = {meleeAttack = 1}})
+  addDrawFunction(
+      function ()
+          love.graphics.origin()
+          love.graphics.translate(50, 50)
+          itemTest:drawSprite()
+      end, 9
+  )
+
   oldHeroImage = love.graphics.newImage("src/img/sprites/oldHero.png")
   knightImage = love.graphics.newImage("src/img/sprites/knight.png")
   mageImage = love.graphics.newImage("src/img/sprites/mage.png")
@@ -43,25 +66,6 @@ function projectSetup()
   audioManager:loadSoundEffect("mouseclick",  "src/snd/soundEffect/snd_mouseClick.mp3")
   audioManager:loadSoundEffect("wrong",       "src/snd/soundEffect/snd_wrong.mp3")
 
-  GMTKScreen = {
-    image = gmtkImage,
-
-    timeLeft = 3,
-    x=-width/2, y=-height/2,
-    draw = function (self)
-      love.graphics.setColor(1, 1, 1, self.timeLeft)
-      love.graphics.translate(self.x, self.y)
-      love.graphics.draw(self.image, 0, 0, 0, width/self.image:getWidth(), height/self.image:getHeight())
-      love.graphics.setColor(1,1,1)
-      love.graphics.circle("fill",ssLogo:getWidth()/10+1,ssLogo:getHeight()/10,105)
-      love.graphics.draw(ssLogo, 0, 0, 0, width/ssLogo:getWidth()/5, height/ssLogo:getHeight()/5)
-      love.graphics.print("Sacra Scriptura",ssLogo:getWidth()/20, ssLogo:getHeight()/5)
-    end,
-    onTermination = function ()
-      ShowMenu()
-    end
-  }
-  table.insert(particuleEffects, GMTKScreen)
 
  
   addDrawFunction(function ()
@@ -80,6 +84,7 @@ function projectSetup()
     start = function(self)
       self.nTurn = 1
       victory.hidden = true
+      mapHidden = false
       self.nextTurns = {"move", "move", "move", "move"}
       self.level = self.level + 1
       nextTurnUI:updateTurns()
@@ -90,7 +95,8 @@ function projectSetup()
         player = applyParams(newLivingEntity(), {image = knightImage, i = 3, j=3, w=32, h=32, spriteSet = {width = 20, height = 20}})
         player.ressources.life = newRessource("life", 10, 10)
         player.ressources.mana = newRessource("mana", 3, 3)
-        player:equip({equipmentType="armor", stats= {armor = 1}})
+        player:equip(newItem({name = "chestplate",equipmentType="armor", itemType = "body armor", stats= {armor = 1}, quad = itemsQuads.armor}))
+        player:equip(itemTest)
         player:addAction(actions.Walk({range=2}))
         player:addAction(actions.MeleeAttack())
         player:addAction(actions.Heal())
@@ -139,6 +145,7 @@ function projectSetup()
       end
     end,
     endTurn = function (self)
+      selectedAction = nil
       if #self.nextTurns <1 then return end
       self:playIAs()
       if player:isDead() then
@@ -209,8 +216,40 @@ function projectSetup()
   
   diceDestination = {x=0, y=-height/2}
 
+  modes = {"normal", "instantStart", "testing"}
+  mode = "instantStart"
+  if mode == "normal" then
+    GMTKScreen = {
+      image = gmtkImage,
 
-
+      timeLeft = 3,
+      x=-width/2, y=-height/2,
+      draw = function (self)
+        love.graphics.setColor(1, 1, 1, self.timeLeft)
+        love.graphics.translate(self.x, self.y)
+        love.graphics.draw(self.image, 0, 0, 0, width/self.image:getWidth(), height/self.image:getHeight())
+        love.graphics.setColor(1,1,1)
+        love.graphics.circle("fill",ssLogo:getWidth()/10+1,ssLogo:getHeight()/10,105)
+        love.graphics.draw(ssLogo, 0, 0, 0, width/ssLogo:getWidth()/5, height/ssLogo:getHeight()/5)
+        love.graphics.print("Sacra Scriptura",ssLogo:getWidth()/20, ssLogo:getHeight()/5)
+      end,
+      onTermination = function ()
+        ShowMenu()
+      end
+    }
+    table.insert(particuleEffects, GMTKScreen)
+    return 
+  end
+  if mode == "instantStart" then
+    HideMenu()
+    game:start()
+  end
+  if mode == "testing" then
+    HideMenu()
+    game:start()
+    testActions()
+    testLivingEntityRessource()
+  end
 end
 
 types = {
@@ -274,90 +313,93 @@ function spawn(type)
 end
 
 function rollDice()
-  diceEntity = {
-    x = 0, y=0, z = 0, f = 2, timer = 0, bounceH = 300,
-    n = 1, rolling = true,
-    angle = 0, speed = 500,
-    update = function(self, dt)
-      if self.rolling then
-        self.timer = self.timer + dt
-        oldZ = self.z
-        self.z = self.bounceH*math.abs(math.sin(self.timer*math.pi/self.f))
-        self.x, self.y = self.x + self.speed*math.cos(self.angle)*dt, self.y + self.speed*math.sin(self.angle)*dt
-        if oldZ > 10 and self.z < 10 then
-          self.angle = math.random()*math.pi*2
-          self.bounceH = self.bounceH/3
-          if self.bounceH < 50 then
-            self.rolling = false
-            self.actionType = actionTypesKeys[math.random(#actionTypesKeys)]
-          end
-        end
-        if math.random() > .5 then
-          self.n = self.n%#fuzzyDicesImages + 1
-        end
-        if self.x < -.25*width or self.y < -.25*height or self.x > .25*width or self.y > .25*height then
-          self.angle = math.angle(self.x, self.y, 0, 0)
-        end
-      else
-        if self.angle > 0 then
-          self.angle = .9*self.angle
-          if self.angle < .1 then self.angle = 0 end
-        end
-        if self.x ~= diceDestination.x and self.y~=diceDestination.y then
-          if math.dist(self.x, self.y, diceDestination.x, diceDestination.y) >= self.speed * dt then 
-            local angle = math.angle(self.x, self.y, diceDestination.x, diceDestination.y)
-            self.x = self.x + self.speed * dt * math.cos(angle)
-            self.y = self.y + self.speed * dt * math.sin(angle)
-          else 
-            self.x = diceDestination.x
-            self.y = diceDestination.y
-            if #game.nextTurns < game.maxPrerolledTurns then
-              table.insert(game.nextTurns, self.actionType)
-              nextTurnUI:updateTurns()
-            end
-            self.terminated = true
-          end
-        end
-      end
-    end,
-    draw = function (self)
-      if self.rolling then
-        love.graphics.setColor(1, 1, 1)
-        local image = fuzzyDicesImages[self.n]
-        local w, h = .5*image:getWidth(), .5*image:getHeight()
-        love.graphics.push()
-        love.graphics.setColor(0, 0, 0, .1)
-        love.graphics.translate(self.x+.5*w, self.y+.5*h)
-        love.graphics.rotate(math.random()*.5)
-        love.graphics.translate(-.5*w, -.5*h)
-        love.graphics.draw(image, 0, 0, 0, .5, .5)
-        love.graphics.pop()
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.translate(self.x+.5*w, self.y-self.z+.5*h)
-        love.graphics.rotate(math.random()*.5)
-        love.graphics.translate(-.5*w, -.5*h)
-        love.graphics.draw(image, 0, 0, 0, .5, .5)
-      else
-        local w, h = 80/diceImg:getWidth(), 80/diceImg:getHeight()
-        love.graphics.push()
-        love.graphics.setColor(0, 0, 0, .1)
-        love.graphics.translate(self.x+.5*w, self.y+10+.5*h)
-        love.graphics.rotate(self.angle)
-        love.graphics.translate(-.5*w, -.5*h)
-        love.graphics.draw(diceImg, 0, 0, 0, w, h)
-        love.graphics.pop()
-        local currImg = actionTypes[self.actionType].img
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(diceImg, self.x, self.y, self.angle, w, h)
-        love.graphics.draw(currImg, self.x, self.y, self.angle, w, h)
-      end
-    end,
-    roll = function (self)
-      self.rolling = true
-      self.bounceH = 300
-    end,
-  }
-  table.insert(entities, diceEntity)
+  
+  table.insert(game.nextTurns, actionTypesKeys[math.random(#actionTypesKeys)])
+  nextTurnUI:updateTurns()
+  -- diceEntity = {
+  --   x = 0, y=0, z = 0, f = 2, timer = 0, bounceH = 300,
+  --   n = 1, rolling = true,
+  --   angle = 0, speed = 500,
+  --   update = function(self, dt)
+  --     if self.rolling then
+  --       self.timer = self.timer + dt
+  --       oldZ = self.z
+  --       self.z = self.bounceH*math.abs(math.sin(self.timer*math.pi/self.f))
+  --       self.x, self.y = self.x + self.speed*math.cos(self.angle)*dt, self.y + self.speed*math.sin(self.angle)*dt
+  --       if oldZ > 10 and self.z < 10 then
+  --         self.angle = math.random()*math.pi*2
+  --         self.bounceH = self.bounceH/3
+  --         if self.bounceH < 50 then
+  --           self.rolling = false
+  --           self.actionType = actionTypesKeys[math.random(#actionTypesKeys)]
+  --         end
+  --       end
+  --       if math.random() > .5 then
+  --         self.n = self.n%#fuzzyDicesImages + 1
+  --       end
+  --       if self.x < -.25*width or self.y < -.25*height or self.x > .25*width or self.y > .25*height then
+  --         self.angle = math.angle(self.x, self.y, 0, 0)
+  --       end
+  --     else
+  --       if self.angle > 0 then
+  --         self.angle = .9*self.angle
+  --         if self.angle < .1 then self.angle = 0 end
+  --       end
+  --       if self.x ~= diceDestination.x and self.y~=diceDestination.y then
+  --         if math.dist(self.x, self.y, diceDestination.x, diceDestination.y) >= self.speed * dt then 
+  --           local angle = math.angle(self.x, self.y, diceDestination.x, diceDestination.y)
+  --           self.x = self.x + self.speed * dt * math.cos(angle)
+  --           self.y = self.y + self.speed * dt * math.sin(angle)
+  --         else 
+  --           self.x = diceDestination.x
+  --           self.y = diceDestination.y
+  --           if #game.nextTurns < game.maxPrerolledTurns then
+  --             table.insert(game.nextTurns, self.actionType)
+  --             nextTurnUI:updateTurns()
+  --           end
+  --           self.terminated = true
+  --         end
+  --       end
+  --     end
+  --   end,
+  --   draw = function (self)
+  --     if self.rolling then
+  --       love.graphics.setColor(1, 1, 1)
+  --       local image = fuzzyDicesImages[self.n]
+  --       local w, h = .5*image:getWidth(), .5*image:getHeight()
+  --       love.graphics.push()
+  --       love.graphics.setColor(0, 0, 0, .1)
+  --       love.graphics.translate(self.x+.5*w, self.y+.5*h)
+  --       love.graphics.rotate(math.random()*.5)
+  --       love.graphics.translate(-.5*w, -.5*h)
+  --       love.graphics.draw(image, 0, 0, 0, .5, .5)
+  --       love.graphics.pop()
+  --       love.graphics.setColor(1, 1, 1)
+  --       love.graphics.translate(self.x+.5*w, self.y-self.z+.5*h)
+  --       love.graphics.rotate(math.random()*.5)
+  --       love.graphics.translate(-.5*w, -.5*h)
+  --       love.graphics.draw(image, 0, 0, 0, .5, .5)
+  --     else
+  --       local w, h = 80/diceImg:getWidth(), 80/diceImg:getHeight()
+  --       love.graphics.push()
+  --       love.graphics.setColor(0, 0, 0, .1)
+  --       love.graphics.translate(self.x+.5*w, self.y+10+.5*h)
+  --       love.graphics.rotate(self.angle)
+  --       love.graphics.translate(-.5*w, -.5*h)
+  --       love.graphics.draw(diceImg, 0, 0, 0, w, h)
+  --       love.graphics.pop()
+  --       local currImg = actionTypes[self.actionType].img
+  --       love.graphics.setColor(1, 1, 1)
+  --       love.graphics.draw(diceImg, self.x, self.y, self.angle, w, h)
+  --       love.graphics.draw(currImg, self.x, self.y, self.angle, w, h)
+  --     end
+  --   end,
+  --   roll = function (self)
+  --     self.rolling = true
+  --     self.bounceH = 300
+  --   end,
+  -- }
+  -- table.insert(entities, diceEntity)
 end
 
 
@@ -394,7 +436,7 @@ function love.keypressed(key, scancode, isrepeat)
    victory.hidden = false
   end
   if key == "escape" then
-    if MenuScreen.hidden then
+    if MenuScreen.hidden and mode == "normal" then
       ShowMenu()
     else
       love.event.quit()
@@ -537,7 +579,6 @@ function setupUpgrades()
   upgrades = {
     {player.actions[2], "range", 1},
     {player.actions[3], "healAmout", 1},
-    {player.actions[2], "damage", 5},
     {player.actions[4], "damage", 5},
     {player.actions[4], "range", 5},
     {player.actions[1], "range", 5},
@@ -559,45 +600,5 @@ function upgradePlayer()
       upgrade[1][upgrade[2]] = upgrade[1][upgrade[2]] + 1
       break
     end
-  end
-end
-
-function upgradePlayerold()
-  if math.random() <.01 then
-    player.actions[2].range = player.actions[2].range + 1 --range melee attack
-    upgradeText = "Melee attack gained 1 range!\n" ..upgradeText
-    return
-  end
-  if math.random() <.01 then
-    player.actions[3].healAmout = player.actions[3].healAmout + 1 -- heal healAmout 
-    upgradeText = "Heal recovers 1 more life!\n" ..upgradeText
-    return
-  end
-  if math.random() <.05 then
-    player.actions[2].damage = player.actions[2].damage+1 -- melee attack damage
-    upgradeText = "Melee attack gained 1 damage!\n" ..upgradeText
-    return
-  end
-  if math.random() < .05 then
-    player.actions[4].damage = player.actions[4].damage+1 -- magic missile damage
-    upgradeText = "Magic Missile gained 1 damage!\n" ..upgradeText
-    return
-  end
-  if math.random() < .05 then
-    player.actions[4].range = player.actions[4].range + 1 -- magic missile range
-    upgradeText = "Magic Missile gained 1 range!\n" ..upgradeText
-    return
-  end
-  if math.random() < .05 then
-    player.actions[1].range = player.actions[1].range + 1 -- move damage
-    upgradeText = "Move gained 1 range!\n" ..upgradeText
-    return
-  end
-  if math.random()<.7 then
-    player.ressources.life.max = player.ressources.life.max +1 -- maxLife
-    upgradeText = "You gained 1 life point!\n" ..upgradeText
-  else
-    player.ressources.mana.max = player.ressources.mana.max +1 -- maxMana
-    upgradeText = "You gained 1 mana point!\n" ..upgradeText
   end
 end

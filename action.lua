@@ -100,13 +100,12 @@ actions = {
         local meleeAttack = newAction()
         meleeAttack.name = "MELEE ATTACK"
         meleeAttack.actionType = "attack"
-        meleeAttack.damage = 2
         meleeAttack.activate = function (self, targetCell)
             local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
-            if entityTargeted ~= player and self.caster ~= player then return false end
+            if (entityTargeted ~= player and self.caster ~= player) and mode ~= "testing" then return false end
             if entityTargeted and entityTargeted.hit then
                 if self.caster == player then audioManager:playSound(audioManager.sounds.attack) end
-                entityTargeted:hit(self.damage)
+                entityTargeted:hit((self.caster.stats.meleeAttack or 0) + (self.caster.equipmentStats.meleeAttack or 0))
                 local tx, ty = gridToScreen(targetCell.i+.5, targetCell.j+.5)
                 local cx, cy = gridToScreen(self.caster.i+.5, self.caster.j+.5)
                 local Effect = {x = cx, y = cy, d = math.dist(cx, cy, tx, ty), a = math.angle(cx, cy, tx, ty),timeLeft = .3,
@@ -123,7 +122,7 @@ actions = {
             return false
         end
         meleeAttack.getDescription = function(self)
-            return "Deals "..self.damage.." point(s) of damage at close range.\n A target is required."
+            return "Deals "..(self.caster.stats.meleeAttack or 0) + (self.caster.equipmentStats.meleeAttack or 0).." point(s) of damage at close range.\n A target is required."
         end
         return applyParams(meleeAttack, params)
     end,
@@ -168,7 +167,7 @@ actions = {
         magicMissile.cost = {newRessource("mana", 1)}
         magicMissile.activate = function (self, targetCell)
             local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
-            if entityTargeted ~= player and self.caster ~= player then return false end
+            if (entityTargeted ~= player and self.caster ~= player) and mode ~= "testing" then return false end
             if entityTargeted and entityTargeted.hit then
                 if self.caster == player then audioManager:playSound(audioManager.sounds.magic) end
                 entityTargeted:hit(self.damage)
@@ -203,7 +202,7 @@ function testActions()
     target:initEntity()
     target.ressources.life = newRessource("life", 10, 10)
 
-    local caster = applyParams(newLivingEntity(), {i=1, j=2, color = {0, 0, 1}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
+    local caster = applyParams(newLivingEntity(), {i=1, j=2, color = {0, 0, 1}, stats = {meleeAttack = 2}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
     caster:initEntity()
     caster.ressources.life = newRessource("life", 10, 10)
     local walkAction = actions.Walk()
