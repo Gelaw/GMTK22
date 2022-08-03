@@ -1,4 +1,5 @@
-itemTypes = {"mainhand", "offhand", "armor"}
+equipmentTypes = {"mainhand", "offhand", "armor"}
+itemTypes = {"sword", "armor"}
 
 function newItem(params)
     local item = {

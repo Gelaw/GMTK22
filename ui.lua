@@ -13,7 +13,7 @@ function setupUIs()
     draw = function () end
   }
   table.insert(uis, GameScreen)
-
+  
   victory = {
     x = .5*width-120, y = .5*height-120, w=  240, h= 240,hidden = true,
     draw = function ()
@@ -63,7 +63,7 @@ function setupUIs()
     end
   }
   table.insert(GameScreen.children, defeat)
-
+  
   -- Dedicace Sobroniel pour le nom de variable
   menuRadial = {
     x = 0, y = height*.8,w=width, h = .2*height,
@@ -338,7 +338,7 @@ function setupUIs()
     end
   }
   table.insert(GameScreen.children, equipmentUI)
-
+  
   mainHandSlot = {
     x = 20, y = 100, w = 50, h = 50,
     backgroundColor = {1, 1, 1, .1},
@@ -365,7 +365,7 @@ function setupUIs()
     end,
   }
   table.insert(equipmentUI.children, mainHandSlot)
-
+  
   armorSlot = {
     x = 80, y = 80, w = 50, h = 50,
     backgroundColor = {1, 1, 1, .1},
@@ -392,8 +392,55 @@ function setupUIs()
     end,
   }
   table.insert(equipmentUI.children, armorSlot)
-
-
+  
+  inventoryUI = {
+    x = 0, y = 200, w = 300, h = height/2 - 200,
+    backgroundColor = {1, 1, 0, .1},
+    children = {},
+    draw = function (self)
+      love.graphics.setColor(self.backgroundColor)
+      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+    end,
+    onGameStart = function (self)
+      for i = 1, player.inventory.size do
+        local itemUI = {
+          x = (i-1)*50, y = 0, w = 50, h = 50,
+          i = i,
+          backgroundColor = {1, 1, 1, .3},
+          draw = function (self)
+            love.graphics.setColor(self.backgroundColor)
+            love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+            if player.inventory[i] then
+              player.inventory[i]:drawSprite()
+            end
+          end,
+          onClick = function (self)
+            local item = table.remove(player.inventory, i)
+            if item then
+              player:equip(item)
+            end
+          end,
+          tooltip = {w = 600, h=200, backgroundColor = {.2, .2, .2}, textColor = {1, 1, 1}},
+          drawTooltip = function (self)
+            if player.inventory[i] then
+              love.graphics.origin()
+              love.graphics.print("?", love.mouse.getX()+10, love.mouse.getY()+10)
+              love.graphics.translate(love.mouse.getX() - self.tooltip.w, love.mouse.getY())
+              love.graphics.setColor(self.tooltip.backgroundColor)
+              love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
+              love.graphics.setColor({1, 1, 1, .1})
+              love.graphics.rectangle("line", 5, 5, self.tooltip.w-10, self.tooltip.h-10)
+              love.graphics.setColor({1, 1, 1})
+              player.inventory[i]:drawTooltip(10, 10, self.tooltip.w-10, self.tooltip.h-10)
+            end
+          end,
+        }
+        table.insert(inventoryUI.children, itemUI)
+      end
+    end
+  }
+  table.insert(equipmentUI.children, inventoryUI)
+  
   audioManagerUI = {
     x = 0, y = 0, w = 100, h= 350,
     backgroundColor = {.2, .2, .2},
@@ -485,11 +532,11 @@ function setupUIs()
     end
   }
   table.insert(uis, audioManagerUI)
-
-
+  
+  
 end
 
-  
+
 function ShowMenu()
   MenuScreen.hidden = false
   GameScreen.hidden = true
@@ -508,45 +555,45 @@ end
 
 --uiMockup
 
-  -- testUI = {
-  --   x= 100, y=100,
-  --   w = 300, h=300,
-  --  children = {
-  --    {
-  --      x = 10, y =10, w=30, h=30,
-  --      draw = function (self)
-  --        love.graphics.setColor(0, 0, 0)
-  --        love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-  --      end,
-  --      onClick = function (self)
-  --        print("testUI child click!")
-  --      end,
-  --      onPress = function (self)
-  --        print("testUI child press!")
-  --      end
-  --    }
-  --  },
-  --   onClick = function (self)
-  --     print("testUI parent click!")
-  --   end,
-  --   onPress = function (self)
-  --     print("testUI parent press!")
-  --   end,
-  --   draw = function (self)
-  --     love.graphics.setColor(0, 1, 0)
-  --     love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-  --   end,
-  -- tooltip = {w = 300, h=200, backgroundColor = {.2, .2, .2}},
-  -- drawTooltip = function (self)
-  --   love.graphics.origin()
-  --   love.graphics.print("?", love.mouse.getX()+10, love.mouse.getY()+10)
-  --   love.graphics.translate(love.mouse.getX() - self.tooltip.w, love.mouse.getY() - self.tooltip.h)
-  --   love.graphics.setColor(self.tooltip.backgroundColor)
-  --   love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
-  --   love.graphics.setColor({1, 1, 1, .1})
-  --   love.graphics.rectangle("line", 5, 5, self.tooltip.w-10, self.tooltip.h-10)
-  --   love.graphics.setColor(1, 1, 1)
-  --   love.graphics.print("this is a tooltip", 10, 10)
-  -- end
-  -- }
-  -- table.insert(uis, testUI)
+-- testUI = {
+--   x= 100, y=100,
+--   w = 300, h=300,
+--  children = {
+--    {
+--      x = 10, y =10, w=30, h=30,
+--      draw = function (self)
+--        love.graphics.setColor(0, 0, 0)
+--        love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+--      end,
+--      onClick = function (self)
+--        print("testUI child click!")
+--      end,
+--      onPress = function (self)
+--        print("testUI child press!")
+--      end
+--    }
+--  },
+--   onClick = function (self)
+--     print("testUI parent click!")
+--   end,
+--   onPress = function (self)
+--     print("testUI parent press!")
+--   end,
+--   draw = function (self)
+--     love.graphics.setColor(0, 1, 0)
+--     love.graphics.rectangle("fill", 0, 0, self.w, self.h)
+--   end,
+-- tooltip = {w = 300, h=200, backgroundColor = {.2, .2, .2}},
+-- drawTooltip = function (self)
+--   love.graphics.origin()
+--   love.graphics.print("?", love.mouse.getX()+10, love.mouse.getY()+10)
+--   love.graphics.translate(love.mouse.getX() - self.tooltip.w, love.mouse.getY() - self.tooltip.h)
+--   love.graphics.setColor(self.tooltip.backgroundColor)
+--   love.graphics.rectangle("fill", 0, 0, self.tooltip.w, self.tooltip.h)
+--   love.graphics.setColor({1, 1, 1, .1})
+--   love.graphics.rectangle("line", 5, 5, self.tooltip.w-10, self.tooltip.h-10)
+--   love.graphics.setColor(1, 1, 1)
+--   love.graphics.print("this is a tooltip", 10, 10)
+-- end
+-- }
+-- table.insert(uis, testUI)

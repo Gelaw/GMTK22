@@ -35,14 +35,8 @@ function projectSetup()
     armor = love.graphics.newQuad(15 * spriteSize,  38* spriteSize, spriteSize, spriteSize,
     dungeonSprites:getWidth(), dungeonSprites:getHeight())
   }
-  itemTest = newItem({name = "sword", quad = itemsQuads.sword, stats = {meleeAttack = 1}})
-  addDrawFunction(
-      function ()
-          love.graphics.origin()
-          love.graphics.translate(50, 50)
-          itemTest:drawSprite()
-      end, 9
-  )
+
+
 
   oldHeroImage = love.graphics.newImage("src/img/sprites/oldHero.png")
   knightImage = love.graphics.newImage("src/img/sprites/knight.png")
@@ -88,15 +82,18 @@ function projectSetup()
       self.nextTurns = {"move", "move", "move", "move"}
       self.level = self.level + 1
       nextTurnUI:updateTurns()
-
       setupMap()
       fillMap()
       if not player then
         player = applyParams(newLivingEntity(), {image = knightImage, i = 3, j=3, w=32, h=32, spriteSet = {width = 20, height = 20}})
         player.ressources.life = newRessource("life", 10, 10)
         player.ressources.mana = newRessource("mana", 3, 3)
-        player:equip(newItem({name = "chestplate",equipmentType="armor", itemType = "body armor", stats= {armor = 1}, quad = itemsQuads.armor}))
-        player:equip(itemTest)
+        local armor = newItem({name = "chestplate",equipmentType="armor", itemType = "body armor", stats= {armor = 1}, quad = itemsQuads.armor})
+        local sword = newItem({name = "sword",  quad = itemsQuads.sword, stats = {meleeAttack = 1}})
+        player.inventory.size = 20
+        newItemEntity(armor, 3, 4)
+        newItemEntity(sword, 4, 4)
+        table.insert(player.inventory, newItem({name = "broken sword", color= {1, 0, 0}, quad = itemsQuads.sword, stats = {meleeAttack = 0}}))
         player:addAction(actions.Walk({range=2}))
         player:addAction(actions.MeleeAttack())
         player:addAction(actions.Heal())
@@ -114,7 +111,7 @@ function projectSetup()
         player.ressources.mana.quantity = player.ressources.mana.max
         player:snapToGrid()
       end
-
+      inventoryUI:onGameStart()
       spawnTypes = {"oneshot"}
       if game.level >= 2 then
         table.insert(spawnTypes, "basic")

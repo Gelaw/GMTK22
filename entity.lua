@@ -30,13 +30,20 @@ function newEntity()
     end
     
     entity.move = function(self, newI, newJ)
+        print(self.i, self.j,"",  newI, newJ)
         if not map[newI] or not map[newI][newJ] then return false end
         local entityOnNewPos = getEntityOn(newI, newJ)
-        if not entityOnNewPos or not entityOnNewPos.blockPath then
-            self.i, self.j = newI, newJ
-            return true
+        if entityOnNewPos then
+            if entityOnNewPos.blockPath then
+                return false
+            else
+                if entityOnNewPos.onWalkingOn then
+                    entityOnNewPos:onWalkingOn(self)
+                end
+            end
         end
-        return false
+        self.i, self.j = newI, newJ
+        return true
     end
     
     entity.onNewTurn = function () end
@@ -140,8 +147,14 @@ function newLivingEntity(entity)
     entity.equipmentStats = {}
     entity.equipment = {mainHand = nil, offhand = nil, armor = nil}
     entity.equipmentStats = {}
-    
+    entity.inventory = {size = 0}
     entity.equip = function (self, item)
+        if self.equipment[item.equipmentType] then
+            if self.inventory.size <= #self.inventory then
+                table.remove(self.inventory.size, 1)
+            end
+            table.insert(self.inventory, self.equipment[item.equipmentType])
+        end
         self.equipment[item.equipmentType] = item
         self:recalculateEquipmentStats()
     end
@@ -169,6 +182,24 @@ function newRessource(ressourceType, quantity, max)
     return ressource
 end
 
+function newItemEntity(item, i, j)
+    local ie = newEntity()
+    ie.item = item
+    ie.i, ie.j = i, j
+    ie.blockPath = false
+    ie.onWalkingOn = function (self, walkingEntity)
+        if walkingEntity.equip then
+            walkingEntity:equip(self.item)
+            self.terminated = true
+        end
+    end
+    ie:initEntity()
+    ie.draw = function (self)
+        love.graphics.setColor(self.color or {1, 1, 1})
+        love.graphics.translate(self.x, self.y)
+        self.item:drawSprite()
+    end
+end
 
 function testLivingEntityRessource()
     local livingEntity = applyParams(newLivingEntity(), {i = 5, j=5, color={0, 1, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})

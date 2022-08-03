@@ -134,7 +134,7 @@ actions = {
             local d = manhattanDistance(self.caster, targetCell)
             if d > 0 and d <= self.range then
                 local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
-                return not entityTargeted or entityTargeted.blockPath
+                return (not entityTargeted) or (not entityTargeted.blockPath)
             end
         end
         walk.activate = function (self, targetCell)
