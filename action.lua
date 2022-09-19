@@ -1,4 +1,4 @@
-actionTypesKeys = {"attack", "move", "magic", "miscellaneous"}
+actionTypesKeys = {"attack", "move", "magic"}
 actionTypes = {
     attack = {name = "attack", img = nil},
     move = {name = "move", img = nil},
@@ -16,7 +16,6 @@ function setupActionTypesImages()
     love.graphics.print("?", .5*.5*254-.5*font:getWidth("?"), .5*.5*254-.5*font:getHeight())
     love.graphics.setCanvas()
     actionTypes.miscellaneous.img = love.graphics.newImage(canvas:newImageData())
-  
 end
 
 function newAction()

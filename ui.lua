@@ -363,6 +363,11 @@ function setupUIs()
         player.equipment.mainhand:drawTooltip(10, 10, self.tooltip.w-10, self.tooltip.h-10)
       end
     end,
+    onClick = function (self)
+      if player then
+        player:unequip("mainhand")
+      end
+    end
   }
   table.insert(equipmentUI.children, mainHandSlot)
   
@@ -390,6 +395,11 @@ function setupUIs()
         player.equipment.armor:drawTooltip(10, 10, self.tooltip.w-10, self.tooltip.h-10)
       end
     end,
+    onClick = function (self)
+      if player then
+        player:unequip("armor")
+      end
+    end
   }
   table.insert(equipmentUI.children, armorSlot)
   
@@ -404,7 +414,7 @@ function setupUIs()
     onGameStart = function (self)
       for i = 1, player.inventory.size do
         local itemUI = {
-          x = (i-1)*50, y = 0, w = 50, h = 50,
+          x = ((i-1)%5)*60+5, y = math.floor((i-1)/5)*60+5, w = 50, h = 50,
           i = i,
           backgroundColor = {1, 1, 1, .3},
           draw = function (self)

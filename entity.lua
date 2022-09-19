@@ -148,15 +148,26 @@ function newLivingEntity(entity)
     entity.equipment = {mainHand = nil, offhand = nil, armor = nil}
     entity.equipmentStats = {}
     entity.inventory = {size = 0}
+    entity.addToInventory = function (self, item)
+        if self.inventory.size <= #self.inventory then
+            table.remove(self.inventory.size, 1)
+        end
+        table.insert(self.inventory, item)
+    end
+
     entity.equip = function (self, item)
         if self.equipment[item.equipmentType] then
-            if self.inventory.size <= #self.inventory then
-                table.remove(self.inventory.size, 1)
-            end
-            table.insert(self.inventory, self.equipment[item.equipmentType])
+            self:addToInventory(self.equipment[item.equipmentType])
         end
         self.equipment[item.equipmentType] = item
         self:recalculateEquipmentStats()
+    end
+
+    entity.unequip = function(self, slot)
+        local item = self.equipment[slot]
+        self.equipment[slot] = nil
+        self:addToInventory(item)
+        return item
     end
     
     entity.recalculateEquipmentStats = function (self)
@@ -170,7 +181,15 @@ function newLivingEntity(entity)
     return entity
 end
 
-ressourceTypes = {life = {name = "life"}, mana = {name = "mana"}} 
+ressourceTypes = {
+    life = {name = "life"},
+    mana = {name = "mana"},
+    stamina = {name = "stamina"},
+    ki = {name = "ki"},
+    watt = {name = "watt"},
+    faith = {name = "faith"},
+    rage = {name = "rage"}
+} 
 
 function newRessource(ressourceType, quantity, max)
     local ressource
