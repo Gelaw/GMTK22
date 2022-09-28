@@ -95,6 +95,10 @@ function newLivingEntity(entity)
     
     entity.ressources = {}
     
+    entity.addRessourceBank = function (self, ressource, capacity, defaultValue)
+        self.ressources[ressource] = newRessource(ressource, defaultValue or capacity, capacity)
+    end
+
     entity.isAvailable = function (self, ressource)
         local name = ressource.name
         if self.ressources[name] then
@@ -181,16 +185,6 @@ function newLivingEntity(entity)
     return entity
 end
 
-ressourceTypes = {
-    life = {name = "life"},
-    mana = {name = "mana"},
-    stamina = {name = "stamina"},
-    ki = {name = "ki"},
-    watt = {name = "watt"},
-    faith = {name = "faith"},
-    rage = {name = "rage"}
-} 
-
 function newRessource(ressourceType, quantity, max)
     local ressource
     if ressourceType.name then
@@ -218,21 +212,4 @@ function newItemEntity(item, i, j)
         love.graphics.translate(self.x, self.y)
         self.item:drawSprite()
     end
-end
-
-function testLivingEntityRessource()
-    local livingEntity = applyParams(newLivingEntity(), {i = 5, j=5, color={0, 1, 0}, spriteSet = {path = "src/img/sprites/oldHero.png", width = 16, height = 16}})
-    livingEntity:initEntity()
-    
-    livingEntity.ressources.life = newRessource("life", 10, 10)
-    livingEntity:hit(2)
-    assert(livingEntity.ressources.life.quantity == 8, "livingEntity:hit(damage) failed!")
-    print("livingEntity:hit(damage) Ok")
-    
-    livingEntity:credit(newRessource("life", 3))
-    assert(livingEntity.ressources.life.quantity == 10, "livingEntity:credit() action failed! expected livingEntity life 10, found "..livingEntity.ressources.life.quantity)
-    print("livingEntity:credit() Ok")
-    livingEntity:hit(11)
-    assert(livingEntity:isDead(), "living entity not dead after deadly hit")
-    print("livingEntity:isDead() OK")
 end

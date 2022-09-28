@@ -1,5 +1,6 @@
 function setupUIs()
   MenuScreen = {
+    id="MenuScreen",
     x=0, y=0, w = width, h = height,
     children = {},
     hidden = true,
@@ -7,6 +8,7 @@ function setupUIs()
   }
   table.insert(uis, MenuScreen)
   GameScreen = {
+    id="GameScreen",
     x=0, y=0, w = width, h = height,
     children = {},
     hidden = true,
@@ -15,6 +17,7 @@ function setupUIs()
   table.insert(uis, GameScreen)
   
   victory = {
+    id = "victorypopup",
     x = .5*width-120, y = .5*height-120, w=  240, h= 240,hidden = true,
     draw = function ()
       love.graphics.push()
@@ -39,6 +42,7 @@ function setupUIs()
   }
   table.insert(GameScreen.children, victory)
   defeat = {
+    id = "defeatpopup",
     x = .5*width-120, y = .5*height-120, w=  240, h= 240,hidden = true,
     draw = function ()
       love.graphics.push()
@@ -66,6 +70,7 @@ function setupUIs()
   
   -- Dedicace Sobroniel pour le nom de variable
   menuRadial = {
+    id="menuRadial",
     x = 0, y = height*.8,w=width, h = .2*height,
     color = {.1, .1, .1},
     children = {},
@@ -78,6 +83,7 @@ function setupUIs()
   
   playerActionsUIX = 400
   statsUI = {
+    id = "statUI",
     backgroundColor = {.5, .2, .2}, textColor = {.3, .7, .7},
     x = 10, y = 10, w = playerActionsUIX - 20, h = .2*height,
     draw = function (self)
@@ -100,6 +106,7 @@ function setupUIs()
   table.insert(menuRadial.children, statsUI)
   
   playerActionsUI = {
+    id = "playerActionsUI",
     x = playerActionsUIX, y = 10,w=width-playerActionsUIX-170, h = .2*height-10,
     color = {.1, .1, .1},
     draw = function (self)
@@ -128,10 +135,6 @@ function setupUIs()
             local image= actionTypes[action.actionType].img
             local size = self.w
             love.graphics.draw(image, 0, 0, 0, size/image:getWidth(), size/image:getHeight())
-            if action.actionType ~= game.nextTurns[1] then
-              love.graphics.setColor(1, 0, 0, .1)
-              love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-            end
           end,
           tooltip = {w = 600, h=300, backgroundColor = {.2, .2, .2}},
           drawTooltip = function (self)
@@ -171,9 +174,7 @@ function setupUIs()
             love.graphics.printf(action:getDescription(), 10, y, self.tooltip.w - 20)
           end,
           onClick = function (self)
-            if action.actionType == game.nextTurns[1] then
-              selectedAction = action
-            end
+            selectedAction = action
           end
         }
         x = x + 170
@@ -184,6 +185,7 @@ function setupUIs()
   table.insert(menuRadial.children, playerActionsUI)
   
   endTurnButton = {
+    id="endturnButton",
     x = width - 170, y = 20, w = 150, h = 150,
     backgroundColor = {.2, .2, .2}, textColor = {1, 1, 1}, text = "ENDTURN", textX = .5*150 - .5*love.graphics.getFont():getWidth("ENDTURN"),
     draw = function (self)
@@ -213,6 +215,7 @@ function setupUIs()
   }
   table.insert(menuRadial.children, endTurnButton)
   actionOverlay = {
+    id = "actionOverlay",
     draw = function (self)
       if selectedAction and player then
         love.graphics.setColor(1, 1, 1, .1)
@@ -231,51 +234,14 @@ function setupUIs()
     end
   }
   table.insert(GameScreen.children, actionOverlay)
-  
-  nextTurnUIW = 500
-  nextTurnUI = {
-    x= .5*(width-nextTurnUIW), y = 0,w = nextTurnUIW, h = 100,
-    backgroundColor = {.1, .1, .1},
-    children = {},
-    draw = function(self)
-      love.graphics.setColor(self.backgroundColor)
-      love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-    end,
-    updateTurns = function (self)
-      self.children = {}
-      for n, turn in pairs(game.nextTurns) do
-        local child = {
-          x = (n-1)*100, y = 0, w = 100, h = 100,
-          draw = function (self)
-            love.graphics.setColor({.1, .1, .1})
-            love.graphics.rectangle("fill", 0, 0, self.w, self.h)
-            local currImg = actionTypes[turn].img
-            love.graphics.setColor(1,1,1)
-            
-            love.graphics.draw(diceImg, 0, 0, 0, self.w/diceImg:getWidth(), self.h/diceImg:getHeight())
-            love.graphics.draw(currImg, 0, 0, 0, self.h/currImg:getWidth(), self.h/currImg:getHeight())
-            if n == 1 then
-              love.graphics.rectangle("line", 0, 0, self.w, self.h)
-              love.graphics.polygon("fill", .5*self.w, .9*self.h, .4*self.w, self.h, .6*self.w, self.h)
-            end
-          end
-        }
-        if n == 1 then
-          child.x = child.x - 20
-          child.w = child.w + 20
-          child.h = child.h + 20
-        end
-        table.insert(self.children, child)
-      end
-    end
-  }
-  table.insert(GameScreen.children, nextTurnUI)
+
   
   
   local image = love.graphics.newImage("src/img/Options/EXIT.png")
   local subImage = {x = 23, y= 54, w=85, h=22}
   local quad = love.graphics.newQuad(subImage.x, subImage.y, subImage.w, subImage.h, image)
   ExitButton = {
+    id="ExitButton",
     x = (width - 5*subImage.w), y = 0,
     w = 5*subImage.w, h = 5*subImage.h, image = image, quad = quad,
     draw = function (self)
@@ -476,6 +442,7 @@ function setupUIs()
           end
         end,
         onClick = function (self)
+
           audioManager:toggleMute()
           print(self.px, self.py)
         end
@@ -541,7 +508,8 @@ function setupUIs()
       love.graphics.rectangle("fill", 0, 0, self.w, self.h)
     end
   }
-  table.insert(uis, audioManagerUI)
+  table.insert(GameScreen.children, audioManagerUI)
+  table.insert(MenuScreen.children, audioManagerUI)
   
   
 end
@@ -559,6 +527,8 @@ end
 function HideMenu()
   MenuScreen.hidden = true
   GameScreen.hidden = false
+  defeat.hidden = true
+  victory.hidden = true
   mapHidden = false
 end
 

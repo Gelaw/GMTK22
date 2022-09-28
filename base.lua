@@ -138,7 +138,7 @@ function cameraShake(intensity, duration, pattern)
   else
     --Decrit des patterns gauche a droite, croise l ecran etc a modif en fonction
     if pattern == "cross" then
-
+      
     end
   end
 end
@@ -180,7 +180,7 @@ function init()
       end
     end
   end, 5)
-
+  
   addUpdateFunction(function (dt)
     for e = #entities, 1, -1 do
       local entity = entities[e]
@@ -218,9 +218,9 @@ function init()
       end
     end
   end)
-
+  
   particuleEffects = {}
-
+  
   addDrawFunction(function ()
     for pe, particuleEffect in pairs(particuleEffects) do
       if math.abs(particuleEffect.x  - camera.x) <= .75*(width)/camera.scale
@@ -235,7 +235,7 @@ function init()
       end
     end
   end, 6)
-
+  
   addUpdateFunction(function (dt)
     for pe = #particuleEffects, 1, -1 do
       particuleEffect = particuleEffects[pe]
@@ -246,9 +246,9 @@ function init()
       end
     end
   end)
-
+  
   uis = {}
-
+  
   function drawUIs()
     love.graphics.origin()
     for u, ui in pairs(uis) do
@@ -258,26 +258,106 @@ function init()
       mouseover:drawTooltip()
     end
   end
-
+  
   addDrawFunction(drawUIs, 9)
 
-  function drawElementAndChildren(ui)
-    if not ui.hidden and ui.draw then
-      love.graphics.push()
-      if ui.x and ui.y then
-        love.graphics.translate(ui.x, ui.y)
+  audioManager = {
+    musics = {},
+    musicVolume = .05, mute = false,
+    
+    loadMusic = function(self, name, path)
+      self.musics[name] = love.audio.newSource( path, 'static' )
+    end,
+    
+    toggleMute = function(self, forced)
+      print("?")
+      self.mute = forced or not self.mute
+      if self.mute then
+        love.audio.pause()
+      elseif self.music then
+        self.music:play()
       end
-      ui:draw()
-      if ui.children then
-        for c, child in pairs(ui.children) do
-          drawElementAndChildren(child)
+    end,
+    changeMusicVolume = function (self, newVolume)
+      self.musicVolume = newVolume
+      if self.music then
+        self.music:setVolume(self.musicVolume)
+      end
+    end,
+    
+    playMusic = function (self, music)
+      if self.music == music then return end
+      if self.music then
+        self.music:stop()
+        self.music:seek(0)
+      end
+      self.music = music
+      self.music:play()
+      if self.mute then self.music:pause() end
+      self.music:setVolume(self.musicVolume)
+      self.music:setLooping(true)
+    end,
+    
+    sounds = { },
+    
+    SEVolume = 0.05, muteSE = false,
+    playingSounds = {},
+    
+    loadSoundEffect = function(self, name, path)
+      self.sounds[name] = love.audio.newSource( path, 'static' )
+    end,
+    
+    toggleMuteSE = function(self, forced)
+      self.muteSE = forced or not self.muteSE
+      for s, sound in pairs(self.playingSounds) do
+        sound:stop()
+      end
+      self.playingSounds = {}
+    end,
+    
+    changeSEVolume = function (self, newVolume)
+      self.SEVolume = newVolume
+      for s, sound in pairs(self.playingSounds) do
+        sound:setVolume(newVolume)
+      end
+    end,
+    
+    playSound = function (self, sound)
+      if self.muteSE then return end
+      local clone = sound:clone()
+      clone:setVolume(self.SEVolume)
+      table.insert(self.playingSounds, clone)
+      clone:play()
+      self:cleanPlayingSounds()
+      return clone
+    end,
+    
+    cleanPlayingSounds = function (self)
+      for s = #self.playingSounds, 1, -1 do
+        if not self.playingSounds[s]:isPlaying() then
+          table.remove(self.playingSounds, s)
         end
       end
-      love.graphics.pop()
     end
-  end
+  }
 end
 
+  
+function drawElementAndChildren(ui)
+  if not ui.hidden and ui.draw then
+    love.graphics.push()
+    if ui.x and ui.y then
+      love.graphics.translate(ui.x, ui.y)
+    end
+    ui:draw()
+    if ui.children then
+      for c, child in pairs(ui.children) do
+        drawElementAndChildren(child)
+      end
+    end
+    love.graphics.pop()
+  end
+end
 
 function getElementOn(x, y)
   local element   
@@ -344,7 +424,7 @@ function safeLoadAndRun(name)
     -- print('The following error happened: ' .. tostring(chunk))
   else
     ok, result = pcall(chunk) -- execute the chunk safely
-
+    
     if not ok then -- will be false if there is an error
       -- print('The following error happened: ' .. tostring(result))
     else
@@ -357,6 +437,38 @@ function love.load(arg)
   init()
   projectSetup()
 end
+
+
+function newAnimation(image, width, height, duration, w, h)
+  local animation = {}
+  animation.spriteSheet = image;
+  animation.quads = {};
+  animation.scale = {x = w/width, y = h/height} or {x=1, y=1}
+  for y = 0, image:getHeight() - height, height do
+    for x = 0, image:getWidth() - width, width do
+      table.insert(animation.quads, love.graphics.newQuad(x, y, width, height, image:getDimensions()))
+    end
+  end
+  
+  animation.duration = duration or 1
+  animation.currentTime = 0
+  
+  animation.update = function (self, dt)
+    self.currentTime = self.currentTime + dt
+    if self.currentTime >= self.duration then
+      self.currentTime = self.currentTime - self.duration
+    end
+  end
+  
+  animation.draw = function (self)
+    local spriteNum = math.floor(self.currentTime / self.duration * #self.quads) + 1
+    love.graphics.draw(self.spriteSheet, self.quads[spriteNum], -.5*width*self.scale.x, -.5*height*self.scale.y, 0, self.scale.x, self.scale.y)
+  end
+  return animation
+end
+
+
+
 
 
 function applyParams(table, parameters)
@@ -453,11 +565,11 @@ function findIntersect(l1p1x,l1p1y, l1p2x,l1p2y, l2p1x,l2p1y, l2p2x,l2p2y, seg1,
 end
 
 function get_closest_point(x1,y1, x2,y2, a,b)
-    if x1==x2 then return {x1,b} end
-    if y1==y2 then return {a,y1} end
-    m1 = (y2-y1)/(x2-x1)
-    m2 = -1/m1
-    x = (m1*x1-m2*a+b-y1) / (m1-m2)
-    y = m2*(x-a)+b
-    return {x,y}
+  if x1==x2 then return {x1,b} end
+  if y1==y2 then return {a,y1} end
+  m1 = (y2-y1)/(x2-x1)
+  m2 = -1/m1
+  x = (m1*x1-m2*a+b-y1) / (m1-m2)
+  y = m2*(x-a)+b
+  return {x,y}
 end

@@ -1,5 +1,3 @@
-equipmentTypes = {"mainhand", "offhand", "armor"}
-itemTypes = {"sword", "armor"}
 
 function newItem(params)
     local item = {
