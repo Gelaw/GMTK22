@@ -6,13 +6,14 @@ local game = {
   start = function(self)
     self.nTurn = 1
     mapHidden = false
+    victory.hidden = true
     self.level = self.level + 1
     setupMap()
     fillMap()
     if not player then
       player = newPlayerCharacter()
       local sword = newItem({name = "sword",  quad = itemsQuads.sword, stats = {weaponAttack = 1}})
-      newItemEntity(sword, 4, 4)
+      newItemEntity(sword, 3, 4)
       setupUpgrades()
     else
       for e, entity in pairs(entities) do
@@ -44,6 +45,10 @@ local game = {
       forces = forces + forceTable[n]
       spawn(spawnTypes[n])
     end
+
+    for e, entity in pairs(entities) do
+      entity:triggerGameplayEvent("fightStart")
+    end
   end,
   finish = function (self)
     self.level = 0
@@ -59,6 +64,9 @@ local game = {
       defeat.hidden = false
     end
     game.nTurn = game.nTurn + 1
+    for e, entity in pairs(entities) do
+      if entity.tickEffects then entity:tickEffects() end
+    end
   end,
   playIAs = function (self)
     local c = 0
@@ -113,7 +121,7 @@ local game = {
         if tentative then
           game:endTurn()
         else
-          print(msg)
+          -- print(msg)
         end
       end
       selectedAction = nil
@@ -137,22 +145,16 @@ function newPlayerCharacter()
   playerChar:addAction(actions.WeaponAttack())
   classes.warrior.setup(playerChar)
   playerChar.inventory.size = 20
-  table.insert(playerChar.inventory, newItem({name = "broken sword", color= {1, 0, 0}, quad = itemsQuads.sword, stats = {weaponAttack = 0}}))
   playerChar:initEntity()
   return playerChar
 end
 
-function addEvent(event, callBack, id)
-  if eventTypes.event.id ~= nil then print("WARNING event id "..id.." already in use, previous one overridden") end
-  eventTypes.event.id = callBack
-end
-
 eventTypes = {
-  fightStart; fightEnd;
-  turnStart; turnEnd;
-  damageTaken; damageDealt;
-  bonusReceived; bonusLost;
-  malusReceived; malusLost;
+  "fightStart"; "fightEnd";
+  "turnStart"; "turnEnd";
+  "damageTaken"; "damageDealt";
+  "bonusReceived"; "bonusLost";
+  "malusReceived"; "malusLost";
 }
 
 return game

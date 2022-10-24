@@ -8,6 +8,23 @@ function newEntity()
     entity.blockPath = true         --does entity prevent from walking on his cell
     entity.stats = {meleeAttack = 1}
     
+    entity.gameplayEvents = {}
+    entity.addGameplayEvent = function (self, event, callback)
+        if not self.gameplayEvents[event] then
+            self.gameplayEvents[event] = {}
+        end
+        table.insert(self.gameplayEvents[event], callback)
+    end
+    entity.getGameplayEvents = function (self, event)
+        return self.gameplayEvents[event]
+    end
+    entity.triggerGameplayEvent = function (self, event, eventualVariable)
+        local callbacks = self:getGameplayEvents(event) or {}
+        for c, callb in pairs(callbacks) do
+          callb(eventualVariable)
+        end
+    end
+
     entity.updates = {
         function (self, dt)
             if not self.i or not self.j then return end
@@ -30,7 +47,6 @@ function newEntity()
     end
     
     entity.move = function(self, newI, newJ)
-        print(self.i, self.j,"",  newI, newJ)
         if not map[newI] or not map[newI][newJ] then return false end
         local entityOnNewPos = getEntityOn(newI, newJ)
         if entityOnNewPos then
@@ -50,8 +66,8 @@ function newEntity()
     
     entity.draw = function (self)
         love.graphics.setColor(self.color or {.8, 0, .8})
-        love.graphics.translate(self.x, self.y)
-        love.graphics.circle("fill", 0, 0, 16)
+        love.graphics.translate(self.x+.5*zoomX*tileSize, self.y+.5*zoomY*tileSize)
+        love.graphics.circle("fill", 0, 0, .5*zoomY*tileSize-.5*self.h)
     end
     
     entity.snapToGrid = function (self)
@@ -135,7 +151,7 @@ function newLivingEntity(entity)
         end
     end
     entity.onHit = function (self, damage)
-        local absoluteDamage = damage - (self.stats.armor or 0) - (self.equipmentStats.armor or 0)
+        local absoluteDamage = damage - self:getEffectiveStat("armor")
         if self.ressources.life and absoluteDamage > 0 then
             self:deduct(newRessource("life", absoluteDamage))
         end
@@ -150,7 +166,6 @@ function newLivingEntity(entity)
     
     entity.equipmentStats = {}
     entity.equipment = {mainHand = nil, offhand = nil, armor = nil}
-    entity.equipmentStats = {}
     entity.inventory = {size = 0}
     entity.addToInventory = function (self, item)
         if self.inventory.size <= #self.inventory then
@@ -182,6 +197,41 @@ function newLivingEntity(entity)
             end
         end
     end
+
+    
+    entity.activeEffects = {}
+    entity.addEffect = function (self, effect)
+        table.insert(self.activeEffects, effect)
+        self:recalculateEffectStats()
+    end
+    entity.tickEffects = function (self)
+        local effectChanged = false
+        for e = #self.activeEffects, 1, -1 do
+            local effect = self.activeEffects[e]
+            if effect.duration then
+                effect.duration = effect.duration - 1
+                if effect.duration <= 0 then
+                    table.remove(self.activeEffects, e)
+                    effectChanged = true
+                end
+            end
+        end
+        if effectChanged then self:recalculateEffectStats() end
+    end
+    entity.effectStats = {}
+    entity.recalculateEffectStats = function (self)
+        self.effectStats = {}
+        for e, effect in pairs(self.activeEffects) do
+            for s, stat in pairs(effect.stats) do
+                self.effectStats[s] = (self.effectStats[s] or 0) + stat * (effect.stack or 1)
+            end
+        end
+    end
+
+    entity.getEffectiveStat = function (self, stat)
+       return (self.stats[stat] or 0) + (self.equipmentStats[stat] or 0) + (self.effectStats[stat] or 0)
+    end
+
     return entity
 end
 

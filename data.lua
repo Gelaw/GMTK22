@@ -38,6 +38,22 @@ classes = {
       entity:addRessourceBank("life", 10)
       entity:addRessourceBank("mana", 10)
       entity:addAction(actions.MagicMissile())
+      entity:addGameplayEvent("fightStart", function ()
+        entity:credit(newRessource("mana", entity.ressources["mana"].max))
+        for n = 1, 3 do
+          local manaline = newEntity()
+          manaline.color = {0, 0, 1}
+          manaline.blockPath = false
+          manaline.i, manaline.j = entity.i +n, entity.j + n
+          manaline.onWalkingOn = function (self, walkingEntity)
+            if walkingEntity.ressources["mana"] and walkingEntity.ressources["mana"].quantity < walkingEntity.ressources["mana"].max then
+              walkingEntity:credit(newRessource("mana", 1))
+              self.terminated = true
+            end
+          end
+          manaline:initEntity()
+        end
+      end)
       --add fightStart Event for spawning manalines: "https://shadowrun.fandom.com/wiki/Manalines_and_power_sites" 
       --for mana regeneration
     end
@@ -47,7 +63,7 @@ classes = {
     setup = function (entity)
       entity.class = "warrior"
       entity:addRessourceBank("life", 10)
-      entity:addRessourceBank("rage", 100)
+      entity:addRessourceBank("rage", 100, 0)
       entity:addAction(actions.Enrage())
     end
   },
@@ -109,7 +125,7 @@ actions = {
           if (entityTargeted ~= player and self.caster ~= player) and mode ~= "testing" then return false end
           if entityTargeted and entityTargeted.hit then
               if self.caster == player then audioManager:playSound(audioManager.sounds.attack) end
-              entityTargeted:hit((self.caster.stats.weaponAttack or 0) + (self.caster.equipmentStats.weaponAttack or 0))
+              entityTargeted:hit(self.caster:getEffectiveStat("weaponAttack"))
               local tx, ty = gridToScreen(targetCell.i+.5, targetCell.j+.5)
               local cx, cy = gridToScreen(self.caster.i+.5, self.caster.j+.5)
               local Effect = {x = cx, y = cy, d = math.dist(cx, cy, tx, ty), a = math.angle(cx, cy, tx, ty),timeLeft = .3,
@@ -121,14 +137,13 @@ actions = {
               end}
 
               table.insert(particuleEffects, Effect)
-              print(self.caster.ressources["rage"])
               if self.caster.ressources["rage"] then self.caster:credit(newRessource("rage", 10)) end
               return true
           end
           return false
       end
       weaponAttack.getDescription = function(self)
-          return "Deals "..(self.caster.stats.weaponAttack or 0) + (self.caster.equipmentStats.weaponAttack or 0).." point(s) of damage at close range.\n A target is required."
+          return "Deals "..(self.caster:getEffectiveStat("weaponAttack")).." point(s) of damage at close range.\n A target is required."
       end
       return applyParams(weaponAttack, params)
   end,
@@ -202,10 +217,9 @@ actions = {
     enrage.actionType = "miscellaneous"
     enrage.range = 0  
     enrage.usableOnSelf = true
-    enrage.cost = {newRessource("rage", 70)}
+    enrage.cost = {newRessource("rage", 40)}
     enrage.activate = function (self, targetCell)
-      --TODO buff caster
-      print("!!")
+      self.caster:addEffect({name="raging", stats = {weaponAttack = 1}, duration = 6})
       return true
     end
     enrage.getDescription = function (self)
