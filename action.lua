@@ -1,4 +1,4 @@
-actionTypesKeys = {"attack", "move", "magic"}
+actionTypesKeys = {"attack", "move", "magic", "miscellaneous"}
 actionTypes = {
     attack = {name = "attack", img = nil},
     move = {name = "move", img = nil},
@@ -31,7 +31,7 @@ function newAction()
             if d > 0 then
                 return self.range >= d
             else
-                return usableOnSelf
+                return self.usableOnSelf
             end
         end,
         isCostAvailable = function (self)

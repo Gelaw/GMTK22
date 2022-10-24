@@ -15,12 +15,11 @@ classes = {
   --example, to be removed
   formerHero = {
     setup = function (entity)
+      entity.class = "formerHero"
       entity:addRessourceBank("life", 10)
       entity:addRessourceBank("mana", 3)
-      entity:addAction(actions.MeleeAttack())
       entity:addAction(actions.Heal())
       entity:addAction(actions.MagicMissile())
-      entity:addAction(actions.Walk({range=2}))
     end
   },
 
@@ -28,16 +27,33 @@ classes = {
   fighter = {
     name = "fighter",
     setup = function (entity)
+      entity.class = "fighter"
+      entity:addRessourceBank("life", 10)
+    end
+  },
+  mage = {
+    name = "mage",
+    setup = function (entity)
+      entity.class = "mage"
+      entity:addRessourceBank("life", 10)
+      entity:addRessourceBank("mana", 10)
+      entity:addAction(actions.MagicMissile())
+      --add fightStart Event for spawning manalines: "https://shadowrun.fandom.com/wiki/Manalines_and_power_sites" 
+      --for mana regeneration
+    end
+  },
+  warrior = {
+    name = "warrior",
+    setup = function (entity)
+      entity.class = "warrior"
       entity:addRessourceBank("life", 10)
       entity:addRessourceBank("rage", 100)
-      entity:addAction(actions.MeleeAttack({cost = {newRessource("rage", 10)}}))
-      entity:addAction(actions.Walk({range=2}))
-    end},
-  mage = {name = "mage"},
+      entity:addAction(actions.Enrage())
+    end
+  },
   monk = {name = "monk"},
   engineer = {name = "engineer"},
-  priest = {name = "priest"},
-  warrior = {name = "warrior"}
+  priest = {name = "priest"}
 }
 
 races = {
@@ -57,9 +73,6 @@ actions = {
       heal.usableOnSelf = true
       heal.range = 0
       heal.healAmout = 1
-      heal.isTargetValid = function (self, targetCell)
-          return self.caster.i == targetCell.i and self.caster.j == targetCell.j
-      end
       heal.activate = function (self, targetCell)
           self.caster:credit(newRessource("life", self.healAmout))
           if self.caster == player then audioManager:playSound(audioManager.sounds.heal) end
@@ -87,16 +100,16 @@ actions = {
       end
       return applyParams(heal, params)
   end,
-  MeleeAttack = function(params)
-      local meleeAttack = newAction()
-      meleeAttack.name = "MELEE ATTACK"
-      meleeAttack.actionType = "attack"
-      meleeAttack.activate = function (self, targetCell)
+  WeaponAttack = function(params)
+      local weaponAttack = newAction()
+      weaponAttack.name = "WEAPON ATTACK"
+      weaponAttack.actionType = "attack"
+      weaponAttack.activate = function (self, targetCell)
           local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
           if (entityTargeted ~= player and self.caster ~= player) and mode ~= "testing" then return false end
           if entityTargeted and entityTargeted.hit then
               if self.caster == player then audioManager:playSound(audioManager.sounds.attack) end
-              entityTargeted:hit((self.caster.stats.meleeAttack or 0) + (self.caster.equipmentStats.meleeAttack or 0))
+              entityTargeted:hit((self.caster.stats.weaponAttack or 0) + (self.caster.equipmentStats.weaponAttack or 0))
               local tx, ty = gridToScreen(targetCell.i+.5, targetCell.j+.5)
               local cx, cy = gridToScreen(self.caster.i+.5, self.caster.j+.5)
               local Effect = {x = cx, y = cy, d = math.dist(cx, cy, tx, ty), a = math.angle(cx, cy, tx, ty),timeLeft = .3,
@@ -108,14 +121,16 @@ actions = {
               end}
 
               table.insert(particuleEffects, Effect)
+              print(self.caster.ressources["rage"])
+              if self.caster.ressources["rage"] then self.caster:credit(newRessource("rage", 10)) end
               return true
           end
           return false
       end
-      meleeAttack.getDescription = function(self)
-          return "Deals "..(self.caster.stats.meleeAttack or 0) + (self.caster.equipmentStats.meleeAttack or 0).." point(s) of damage at close range.\n A target is required."
+      weaponAttack.getDescription = function(self)
+          return "Deals "..(self.caster.stats.weaponAttack or 0) + (self.caster.equipmentStats.weaponAttack or 0).." point(s) of damage at close range.\n A target is required."
       end
-      return applyParams(meleeAttack, params)
+      return applyParams(weaponAttack, params)
   end,
   Walk = function(params)
       local walk = newAction()
@@ -180,6 +195,23 @@ actions = {
           return "Expends mana to fire a projectile dealing "..self.damage.." to the target.\n A target is required."
       end
       return applyParams(magicMissile, params)
+  end,
+  Enrage = function (params)
+    local enrage = newAction()
+    enrage.name = "ENRRRRAGE"
+    enrage.actionType = "miscellaneous"
+    enrage.range = 0  
+    enrage.usableOnSelf = true
+    enrage.cost = {newRessource("rage", 70)}
+    enrage.activate = function (self, targetCell)
+      --TODO buff caster
+      print("!!")
+      return true
+    end
+    enrage.getDescription = function (self)
+      return "RRAAAAAAAAAAAHHHHH!!!"
+    end
+    return applyParams(enrage, params)
   end
 }
 
@@ -188,7 +220,7 @@ ennemyTypes = {
     ennemy = applyParams(newLivingEntity(), {image = oldHeroImage, w=32, h=32, color = {0.8, 0.8, 0.8}, spriteSet = {width = 16, height = 16}})
     ennemy:addRessourceBank("life", 3)
     ennemy:addAction(actions.Walk())
-    ennemy:addAction(actions.MeleeAttack({damage = 1}))
+    ennemy:addAction(actions.WeaponAttack({damage = 1}))
     ennemy:initEntity()
     return ennemy
   end,
@@ -196,7 +228,7 @@ ennemyTypes = {
     ennemy = applyParams(newLivingEntity(), {image = oldHeroImage, w=32, h=32, color = {1, 0, 1}, spriteSet = {width = 16, height = 16}})
     ennemy:addRessourceBank("life", 3)
     ennemy:addAction(actions.Walk())
-    ennemy:addAction(actions.MeleeAttack({damage = 1}))
+    ennemy:addAction(actions.WeaponAttack({damage = 1}))
     ennemy:initEntity()
     return ennemy
   end,
@@ -204,7 +236,7 @@ ennemyTypes = {
     ennemy = applyParams(newLivingEntity(), {image = oldHeroImage, w=32, h=32, color = {0, 0, 1}, spriteSet = {width = 16, height = 16}})
     ennemy:addRessourceBank("life", 5)
     ennemy:addAction(actions.Walk({range = 3}))
-    ennemy:addAction(actions.MeleeAttack({damage = 1}))
+    ennemy:addAction(actions.WeaponAttack({damage = 1}))
     
     ennemy:initEntity()
     return ennemy
@@ -213,7 +245,7 @@ ennemyTypes = {
     ennemy = applyParams(newLivingEntity(), {image = oldHeroImage, w=32, h=32, color = {1, 0, 0}, spriteSet = {width = 16, height = 16}})
     ennemy:addRessourceBank("life", 1)
     ennemy:addAction(actions.Walk())
-    ennemy:addAction(actions.MeleeAttack({damage = 5}))
+    ennemy:addAction(actions.WeaponAttack({damage = 5}))
     
     ennemy:initEntity()
     return ennemy
@@ -224,7 +256,7 @@ ennemyTypes = {
     ennemy:addRessourceBank("mana", 10)
     
     ennemy:addAction(actions.Walk({range=2}))
-    ennemy:addAction(actions.MeleeAttack({damage = 2}))
+    ennemy:addAction(actions.WeaponAttack({damage = 2}))
     ennemy:addAction(actions.MagicMissile({range = 3,damage = 3}))
     ennemy:addAction(actions.Heal({healAmout = 1, cost = {newRessource("mana", 1)}}))
     

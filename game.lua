@@ -11,7 +11,7 @@ local game = {
     fillMap()
     if not player then
       player = newPlayerCharacter()
-      local sword = newItem({name = "sword",  quad = itemsQuads.sword, stats = {meleeAttack = 1}})
+      local sword = newItem({name = "sword",  quad = itemsQuads.sword, stats = {weaponAttack = 1}})
       newItemEntity(sword, 4, 4)
       setupUpgrades()
     else
@@ -109,8 +109,11 @@ local game = {
     local i, j = screenToGrid(x, y)
     if map[i] and map[i][j] and map[i][j] > 0 then
       if selectedAction then
-        if selectedAction:try({i=i, j=j}) then
+        local tentative, msg = selectedAction:try({i=i, j=j})
+        if tentative then
           game:endTurn()
+        else
+          print(msg)
         end
       end
       selectedAction = nil
@@ -130,11 +133,26 @@ end
   
 function newPlayerCharacter()
   local playerChar = applyParams(newLivingEntity(), {image = knightImage, i = 3, j=3, w=32, h=32, spriteSet = {width = 20, height = 20}})
-  classes.fighter.setup(playerChar)
+  playerChar:addAction(actions.Walk({range=2}))
+  playerChar:addAction(actions.WeaponAttack())
+  classes.warrior.setup(playerChar)
   playerChar.inventory.size = 20
-  table.insert(playerChar.inventory, newItem({name = "broken sword", color= {1, 0, 0}, quad = itemsQuads.sword, stats = {meleeAttack = 0}}))
+  table.insert(playerChar.inventory, newItem({name = "broken sword", color= {1, 0, 0}, quad = itemsQuads.sword, stats = {weaponAttack = 0}}))
   playerChar:initEntity()
   return playerChar
 end
+
+function addEvent(event, callBack, id)
+  if eventTypes.event.id ~= nil then print("WARNING event id "..id.." already in use, previous one overridden") end
+  eventTypes.event.id = callBack
+end
+
+eventTypes = {
+  fightStart; fightEnd;
+  turnStart; turnEnd;
+  damageTaken; damageDealt;
+  bonusReceived; bonusLost;
+  malusReceived; malusLost;
+}
 
 return game
