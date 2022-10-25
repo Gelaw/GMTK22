@@ -21,6 +21,8 @@ function newAction()
     local action = {
         name = "defaultActionName",
         range = 1,
+        fixedRange = true,
+        getEffectiveRange = function (self) return self.range end,
         usableOnSelf = false,
         caster = nil,
         cost = {},
@@ -29,7 +31,11 @@ function newAction()
         isTargetValid = function (self, targetCell)
             local d = manhattanDistance(self.caster, targetCell)
             if d > 0 then
-                return self.range >= d
+                if self.fixedRange then
+                    return self.range >= d
+                else
+                    return self:getEffectiveRange() >= d
+                end
             else
                 return self.usableOnSelf
             end

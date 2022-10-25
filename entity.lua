@@ -62,8 +62,6 @@ function newEntity()
         return true
     end
     
-    entity.onNewTurn = function () end
-    
     entity.draw = function (self)
         love.graphics.setColor(self.color or {.8, 0, .8})
         love.graphics.translate(self.x+.5*zoomX*tileSize, self.y+.5*zoomY*tileSize)

@@ -67,7 +67,14 @@ classes = {
       entity:addAction(actions.Enrage())
     end
   },
-  monk = {name = "monk"},
+  monk = {name = "monk",
+    setup = function (entity)
+      entity.class = "monk"
+      entity.stats.bonusWalkRange = 1
+      entity:addRessourceBank("life", 10)
+      entity:addRessourceBank("ki", 5, 0)
+    end
+  },
   engineer = {name = "engineer"},
   priest = {name = "priest"}
 }
@@ -151,9 +158,13 @@ actions = {
       local walk = newAction()
       walk.name = "WALK"
       walk.actionType = "move"
+      walk.fixedRange = false
+      walk.getEffectiveRange = function (self)
+        return self.range+self.caster:getEffectiveStat("bonusWalkRange")
+      end
       walk.isTargetValid = function (self, targetCell)
           local d = manhattanDistance(self.caster, targetCell)
-          if d > 0 and d <= self.range then
+          if d > 0 and d <= self:getEffectiveRange() then
               local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
               return (not entityTargeted) or (not entityTargeted.blockPath)
           end
@@ -175,7 +186,7 @@ actions = {
           return false
       end
       walk.getDescription = function (self)
-          return "Moves up to "..self.range.." tiles."
+          return "Moves up to "..self:getEffectiveRange().." tiles."
       end
       return applyParams(walk, params)
   end, 
@@ -219,11 +230,11 @@ actions = {
     enrage.usableOnSelf = true
     enrage.cost = {newRessource("rage", 40)}
     enrage.activate = function (self, targetCell)
-      self.caster:addEffect({name="raging", stats = {weaponAttack = 1}, duration = 6})
+      self.caster:addEffect({name="raging", stats = {weaponAttack = 1}, duration = 6, effectType = "bonus"})
       return true
     end
     enrage.getDescription = function (self)
-      return "RRAAAAAAAAAAAHHHHH!!!"
+      return "RRAAAAAAAAAAAHHHHH!!! [gain 1 weapon attack for 6 turns]"
     end
     return applyParams(enrage, params)
   end
@@ -278,4 +289,11 @@ ennemyTypes = {
     ennemy:initEntity()
     return ennemy
   end
+}
+
+--used stats:
+usedStats= {
+  armor = "reduces damage taken by armor value", --file entity.lua > function newLivingEntity > function entity.onHit
+  weaponAttack = "increases meleeAttack action damage by value", -- file data.lua > table actions.WeaponAttack
+  bonusWalkRange = "increases walk action range by value" -- file data.lua > table actions.Walk
 }

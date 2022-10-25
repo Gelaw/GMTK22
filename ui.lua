@@ -150,7 +150,7 @@ function setupUIs()
             local y =10
             love.graphics.print("name:"..action.name, 10, y)
             y = y  + interLigne
-            love.graphics.print("range:"..action.range, 10, y)
+            love.graphics.print("range:"..action.fixedRange and action.range or action:getEffectiveRange(), 10, y)
             y = y  + interLigne
             love.graphics.print("can be used on oneself:"..(action.usableOnSelf and "Yes" or "No"), 10, y)
             y = y  + interLigne
@@ -224,7 +224,7 @@ function setupUIs()
         for i=0, tilesDisplayWidth-1 do
           for j=0, tilesDisplayHeight-1 do
             if map[i] and map[i][j] and map[i][j]>0 then
-              if (manhattanDistance(player, {i=i, j=j})==0 and selectedAction.usableOnSelf) or (manhattanDistance(player, {i=i, j=j})>0 and manhattanDistance(player, {i=i, j=j}) <= selectedAction.range) then
+              if (manhattanDistance(player, {i=i, j=j})==0 and selectedAction.usableOnSelf) or (manhattanDistance(player, {i=i, j=j})>0 and manhattanDistance(player, {i=i, j=j}) <= (selectedAction.fixedRange and selectedAction.range or selectedAction:getEffectiveRange())) then
                 love.graphics.rectangle("fill", (i-1)*zoomX*tileSize, (j-1)*zoomY*tileSize, zoomX*tileSize, zoomY*tileSize)
               end
             end

@@ -143,7 +143,7 @@ function newPlayerCharacter()
   local playerChar = applyParams(newLivingEntity(), {image = knightImage, i = 3, j=3, w=32, h=32, spriteSet = {width = 20, height = 20}})
   playerChar:addAction(actions.Walk({range=2}))
   playerChar:addAction(actions.WeaponAttack())
-  classes.warrior.setup(playerChar)
+  classes.monk.setup(playerChar)
   playerChar.inventory.size = 20
   playerChar:initEntity()
   return playerChar
