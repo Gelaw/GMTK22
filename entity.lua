@@ -210,6 +210,7 @@ function newLivingEntity(entity)
         local item = self.equipment[slot]
         self.equipment[slot] = nil
         self:addToInventory(item)
+        self:recalculateEquipmentStats()
         return item
     end
     

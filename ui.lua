@@ -150,7 +150,7 @@ function setupUIs()
             local y =10
             love.graphics.print("name:"..action.name, 10, y)
             y = y  + interLigne
-            love.graphics.print("range:"..action.fixedRange and action.range or action:getEffectiveRange(), 10, y)
+            love.graphics.print("range:"..action:getEffectiveRange(), 10, y)
             y = y  + interLigne
             love.graphics.print("can be used on oneself:"..(action.usableOnSelf and "Yes" or "No"), 10, y)
             y = y  + interLigne
