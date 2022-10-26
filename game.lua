@@ -4,12 +4,14 @@ local game = {
   nTurn = 1,
   level = 10,
   start = function(self)
+    --game setup
     self.nTurn = 1
     mapHidden = false
     victory.hidden = true
     self.level = self.level + 1
     setupMap()
     fillMap()
+    --player setup - reset existing player entity or create new one 
     if not player then
       player = newPlayerCharacter()
       local sword = newItem({name = "sword",  quad = itemsQuads.sword, stats = {weaponAttack = 1}})
@@ -25,6 +27,8 @@ local game = {
       player:snapToGrid()
     end
     inventoryUI:onGameStart()
+
+    -- enemy generation
     spawnTypes = {"oneshot"}
     if game.level >= 2 then
       table.insert(spawnTypes, "basic")
@@ -46,6 +50,7 @@ local game = {
       spawn(spawnTypes[n])
     end
 
+    -- trigger fightstart event of entities
     for e, entity in pairs(entities) do
       entity:triggerGameplayEvent("fightStart")
     end
@@ -65,7 +70,10 @@ local game = {
     end
     game.nTurn = game.nTurn + 1
     for e, entity in pairs(entities) do
+      -- tick down effect duration 
       if entity.tickEffects then entity:tickEffects() end
+      -- trigger new turn effects
+      entity:triggerGameplayEvent("turnStart")
     end
   end,
   playIAs = function (self)

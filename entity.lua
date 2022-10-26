@@ -1,13 +1,22 @@
 function newEntity()
     local entity = {}
     
-    entity.i, entity.j = nil        -- board coordinates
-    entity.x, entity.y = 0, 0       -- screen coordinates (can varies from linear interpolation of coordinates during animations)
-    entity.snappingSpeed = 30 * tileSize
-    entity.w, entity.h = tileSize, tileSize
-    entity.blockPath = true         --does entity prevent from walking on his cell
-    entity.stats = {meleeAttack = 1}
+    --i, j : board coordinates
+    entity.i, entity.j = nil
     
+    --x, y : screen coordinates, used for animations 
+    entity.x, entity.y = 0, 0  
+
+    -- snapping speed : speed of correction of x,y pos (relative to i,j pos)
+    entity.snappingSpeed = 30 * tileSize
+
+    --display size
+    entity.w, entity.h = tileSize, tileSize
+
+     --does entity prevent from walking on his cell
+    entity.blockPath = true
+    
+    -- gameplay event callback (on fightStart, newTurn, damage taken, etc)
     entity.gameplayEvents = {}
     entity.addGameplayEvent = function (self, event, callback)
         if not self.gameplayEvents[event] then
@@ -25,6 +34,7 @@ function newEntity()
         end
     end
 
+    --updates
     entity.updates = {
         function (self, dt)
             if not self.i or not self.j then return end
@@ -46,6 +56,7 @@ function newEntity()
         end
     end
     
+    -- move to new i,j position
     entity.move = function(self, newI, newJ)
         if not map[newI] or not map[newI][newJ] then return false end
         local entityOnNewPos = getEntityOn(newI, newJ)
@@ -62,15 +73,17 @@ function newEntity()
         return true
     end
     
+    -- move to x,y pos corresponding to i,j pos
+    entity.snapToGrid = function (self)
+        self.x, self.y = gridToScreen(self.i, self.j)
+    end
+    
     entity.draw = function (self)
         love.graphics.setColor(self.color or {.8, 0, .8})
         love.graphics.translate(self.x+.5*zoomX*tileSize, self.y+.5*zoomY*tileSize)
         love.graphics.circle("fill", 0, 0, .5*zoomY*tileSize-.5*self.h)
     end
-    
-    entity.snapToGrid = function (self)
-        self.x, self.y = gridToScreen(self.i, self.j)
-    end
+
     
     entity.loadAnimation = function (self, spriteSet)
         if self.spriteSet then
@@ -107,12 +120,12 @@ end
 function newLivingEntity(entity)
     local entity = entity or newEntity()
     
+
+    --ressources functions ( used for life, mana, etc )
     entity.ressources = {}
-    
     entity.addRessourceBank = function (self, ressource, capacity, defaultValue)
         self.ressources[ressource] = newRessource(ressource, defaultValue or capacity, capacity)
     end
-
     entity.isAvailable = function (self, ressource)
         local name = ressource.name
         if self.ressources[name] then
@@ -156,11 +169,24 @@ function newLivingEntity(entity)
     end
     entity.onDeath = function (self) end
     
+
     entity.actions = {}
     entity.addAction = function (self, action)
         action.caster = self
         table.insert(self.actions, action)
     end
+
+    
+    --[[ stats are used for bonuses of entities
+        can be :-inherent to entity (in entity.stats)
+                -from equipmnent  (in entity.equipmentStats)
+                -from temporary effect (in entity.activeEffects)
+
+        stats are described in data.lua > usedStats table
+
+        to acquire current value of a stat use entity.getEffectiveStat( statName )
+    ]]--
+    entity.stats = {meleeAttack = 1}
     
     entity.equipmentStats = {}
     entity.equipment = {mainHand = nil, offhand = nil, armor = nil}
@@ -203,18 +229,18 @@ function newLivingEntity(entity)
         self:recalculateEffectStats()
     end
     entity.tickEffects = function (self)
-        local effectChanged = false
+        local effectsChanged = false
         for e = #self.activeEffects, 1, -1 do
             local effect = self.activeEffects[e]
             if effect.duration then
                 effect.duration = effect.duration - 1
                 if effect.duration <= 0 then
                     table.remove(self.activeEffects, e)
-                    effectChanged = true
+                    effectsChanged = true
                 end
             end
         end
-        if effectChanged then self:recalculateEffectStats() end
+        if effectsChanged then self:recalculateEffectStats() end
     end
     entity.effectStats = {}
     entity.recalculateEffectStats = function (self)

@@ -291,7 +291,7 @@ ennemyTypes = {
   end
 }
 
---used stats:
+--used stats and where to find them
 usedStats= {
   armor = "reduces damage taken by armor value", --file entity.lua > function newLivingEntity > function entity.onHit
   weaponAttack = "increases meleeAttack action damage by value", -- file data.lua > table actions.WeaponAttack
