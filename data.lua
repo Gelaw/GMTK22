@@ -23,60 +23,97 @@ classes = {
     end
   },
 
-
   fighter = {
     name = "fighter",
-    setup = function (entity)
+    stats={life = 10},
+    setup = function (class, entity)
       entity.class = "fighter"
-      entity:addRessourceBank("life", 10)
-    end
+      entity:addStats(class.stats)
+    end,
+    passives = {
+      {"life point", stats = {life = 1}}, {"armor point", stats = {armor = 1}}, 
+    }
   },
   mage = {
     name = "mage",
-    setup = function (entity)
+    stats ={life = 8, mana = 20},
+    setup = function (class, entity)
       entity.class = "mage"
-      entity:addRessourceBank("life", 10)
-      entity:addRessourceBank("mana", 10)
       entity:addAction(actions.MagicMissile())
+      entity:addStats(class.stats)
       entity:addGameplayEvent("fightStart", function ()
+        --add fightStart Event for spawning manalines: "https://shadowrun.fandom.com/wiki/Manalines_and_power_sites" 
+        --for mana regeneration
         entity:credit(newRessource("mana", entity.ressources["mana"].max))
         for n = 1, 3 do
-          local manaline = newEntity()
-          manaline.color = {0, 0, 1}
-          manaline.blockPath = false
-          manaline.i, manaline.j = entity.i +n, entity.j + n
-          manaline.onWalkingOn = function (self, walkingEntity)
-            if walkingEntity.ressources["mana"] and walkingEntity.ressources["mana"].quantity < walkingEntity.ressources["mana"].max then
-              walkingEntity:credit(newRessource("mana", 1))
-              self.terminated = true
-            end
-          end
-          manaline:initEntity()
+          spawnManaline()
         end
       end)
-      --add fightStart Event for spawning manalines: "https://shadowrun.fandom.com/wiki/Manalines_and_power_sites" 
-      --for mana regeneration
     end
   },
   warrior = {
     name = "warrior",
-    setup = function (entity)
+    stats ={life = 15, rage = 100},
+    setup = function (class, entity)
       entity.class = "warrior"
-      entity:addRessourceBank("life", 10)
-      entity:addRessourceBank("rage", 100, 0)
+      entity:addStats(class.stats)
       entity:addAction(actions.Enrage())
+      entity:addGameplayEvent("fightStart", function ()
+        entity:deduct(newRessource("rage", entity.ressources["rage"].max))
+      end)
     end
   },
-  monk = {name = "monk",
-    setup = function (entity)
+  monk = {
+    name = "monk",
+    stats = {life = 12, ki = 5, weaponAttack = 1},
+    setup = function (class, entity)
       entity.class = "monk"
       entity.stats.bonusWalkRange = 1
-      entity:addRessourceBank("life", 10)
-      entity:addRessourceBank("ki", 5, 0)
+      entity:addStats(class.stats)
+      entity:addGameplayEvent("fightStart", function ()
+        entity:deduct(newRessource("ki", entity.ressources["ki"].max))
+      end)
+      entity:addAction(actions.WeaponAttack({
+        name = "KI STRIKE",
+        chargedAttackMultiplier = 7,
+        activate = function (self, targetCell)
+          local entityTargeted = getEntityOn(targetCell.i, targetCell.j)
+          if (entityTargeted ~= player and self.caster ~= player) and mode ~= "testing" then return false end
+          if entityTargeted and entityTargeted.hit then
+              if self.caster == player then audioManager:playSound(audioManager.sounds.attack) end
+              entityTargeted:hit(self.caster:getEffectiveStat("weaponAttack"))
+              local tx, ty = gridToScreen(targetCell.i+.5, targetCell.j+.5)
+              local cx, cy = gridToScreen(self.caster.i+.5, self.caster.j+.5)
+              local Effect = {x = cx, y = cy, d = math.dist(cx, cy, tx, ty), a = math.angle(cx, cy, tx, ty),timeLeft = .3,
+              draw = function (self)
+                  love.graphics.setColor(1, 1, 1)
+                  love.graphics.translate(self.x, self.y)
+                  local angle = self.a + self.timeLeft*math.pi
+                  love.graphics.line(0, 0, self.d*math.cos(angle), self.d*math.sin(angle))
+              end}
+
+              table.insert(particuleEffects, Effect)
+              local ressourceKi = self.caster.ressources["ki"]
+              if ressourceKi then
+                if ressourceKi.quantity < ressourceKi.max then
+                  self.caster:credit(newRessource("ki", 1))
+                else
+                  ressourceKi.quantity = 0
+                  entityTargeted:hit(self.caster:getEffectiveStat("weaponAttack")*self.chargedAttackMultiplier)
+                end
+              end
+            return true
+          end
+          return false
+        end,
+        getDescription = function(self)
+          return "Deals "..(self.caster:getEffectiveStat("weaponAttack")).." point(s) of damage at close range. If at maximum Ki charges, comsume all Ki charges to deal "..(self.caster:getEffectiveStat("weaponAttack"))*self.chargedAttackMultiplier.." damage, otherwise gain 1 Ki charge.\n A target is required."
+        end
+      }))
     end
   },
-  engineer = {name = "engineer"},
-  priest = {name = "priest"}
+  -- engineer = {name = "engineer"},
+  -- priest = {name = "priest"}
 }
 
 races = {

@@ -73,7 +73,7 @@ function newEntity()
         return true
     end
     
-    -- move to x,y pos corresponding to i,j pos
+    -- move to x,y pos corresponding to i,j pos instantly
     entity.snapToGrid = function (self)
         self.x, self.y = gridToScreen(self.i, self.j)
     end
@@ -124,7 +124,16 @@ function newLivingEntity(entity)
     --ressources functions ( used for life, mana, etc )
     entity.ressources = {}
     entity.addRessourceBank = function (self, ressource, capacity, defaultValue)
-        self.ressources[ressource] = newRessource(ressource, defaultValue or capacity, capacity)
+        previousCapacity, previousAmount = 0, 0
+        if self.ressources[ressource] then
+            previousCapacity = self.ressources[ressource].max
+            previousAmount = self.ressources[ressource].quantity
+        end
+        print(ressource, (defaultValue or capacity)+previousAmount, capacity+previousCapacity)
+        self.ressources[ressource] = newRessource(ressource, (defaultValue or capacity)+previousAmount, capacity+previousCapacity)
+    end
+    entity.removeRessourceBank = function (self, ressource, capacity)
+
     end
     entity.isAvailable = function (self, ressource)
         local name = ressource.name
@@ -177,17 +186,30 @@ function newLivingEntity(entity)
     end
 
     
-    --[[ stats are used for bonuses of entities
+    --[[
+        stats are used for bonuses of entities
         can be :-inherent to entity (in entity.stats)
                 -from equipmnent  (in entity.equipmentStats)
                 -from temporary effect (in entity.activeEffects)
 
         stats are described in data.lua > usedStats table
 
-        to acquire current value of a stat use entity.getEffectiveStat( statName )
+        to get current value of a stat (from all sources) use entity.getEffectiveStat( statName )
     ]]--
     entity.stats = {meleeAttack = 1}
-    
+    entity.addStat = function (self, statName, value, mode)
+        if mode == "overwrite" or self.stats[statName] == nil  then
+            self.stats[statName] = value
+            return
+        end
+        self.stats[statName] = self.stats[statName] + value
+    end
+    entity.addStats = function (self, stats)
+        for s, stat in pairs(stats) do
+            self:addStat(s, stat)
+        end
+    end
+
     entity.equipmentStats = {}
     entity.equipment = {mainHand = nil, offhand = nil, armor = nil}
     entity.inventory = {size = 0}

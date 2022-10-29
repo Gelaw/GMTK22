@@ -148,13 +148,38 @@ function spawn(type)
 end
   
 function newPlayerCharacter()
+  playerClass = "monk" -- fighter mage warrior monk
+
   local playerChar = applyParams(newLivingEntity(), {image = knightImage, i = 3, j=3, w=32, h=32, spriteSet = {width = 20, height = 20}})
   playerChar:addAction(actions.Walk({range=2}))
   playerChar:addAction(actions.WeaponAttack())
-  classes.monk.setup(playerChar)
+  classes[playerClass]:setup(playerChar)
+  for r, ressourceType in pairs(ressourceTypes) do
+    local stat = playerChar:getEffectiveStat(r)
+    local defaultValue = playerChar:getEffectiveStat("default_"..r)
+    if stat > 0 then
+      playerChar:addRessourceBank(r, stat, defaultValue >0 and defaultValue or nil)
+    end
+  end
   playerChar.inventory.size = 20
   playerChar:initEntity()
   return playerChar
+end
+
+function spawnManaline()
+  local manaline = newEntity()
+  manaline.color = {0, 0, 1}
+  manaline.blockPath = false
+
+  manaline.i, manaline.j = math.random(1, mapWidth), math.random(1, mapHeight)  
+  manaline.onWalkingOn = function (self, walkingEntity)
+    if walkingEntity.ressources["mana"] and walkingEntity.ressources["mana"].quantity < walkingEntity.ressources["mana"].max then
+      walkingEntity:credit(newRessource("mana", 1))
+      self.terminated = true
+      spawnManaline()
+    end
+  end
+  manaline:initEntity()
 end
 
 eventTypes = {
